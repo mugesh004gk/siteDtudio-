@@ -1,0 +1,8 @@
+﻿src/pages/Admin.tsx(4,36): error TS2305: Module '"lucide-react"' has no exported member 'CloudUpload'.
+src/pages/Admin.tsx(186,101): error TS2304: Cannot find name 'MoreHorizontal'.
+src/pages/Builder.tsx(185,34): error TS2304: Cannot find name 'Rocket'.
+src/pages/Builder.tsx(215,28): error TS2304: Cannot find name 'Rocket'.
+src/pages/ComponentDetail.tsx(191,29): error TS2304: Cannot find name 'CheckCircle2'.
+src/pages/ComponentDetail.tsx(241,18): error TS2304: Cannot find name 'CheckCircle2'.
+src/pages/Projects.tsx(143,24): error TS2304: Cannot find name 'Link'.
+src/pages/Projects.tsx(145,25): error TS2304: Cannot find name 'Link'.

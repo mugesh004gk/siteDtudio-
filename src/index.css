@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --color-primary: #6366f1; /* Indigo 500 */
+    --color-secondary: #a855f7; /* Purple 500 */
+    --color-bg: #09090b; /* Zinc 950 */
+    --color-surface: #18181b; /* Zinc 900 */
+    --color-text: #fafafa; /* Zinc 50 */
+    --font-heading: 'Inter', sans-serif;
+    --font-body: 'Inter', sans-serif;
+  }
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-body);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+}

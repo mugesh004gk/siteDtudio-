@@ -1,0 +1,31 @@
+﻿src/components/library/Navbar1.tsx(25,7): error TS17002: Expected corresponding JSX closing tag for 'motion.nav'.
+src/registry/componentsRegistry.ts(44,26): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(44,27): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(44,34): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(44,44): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(44,45): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(44,52): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(44,64): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(44,65): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(44,72): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(53,3): error TS1005: ',' expected.
+src/registry/componentsRegistry.ts(53,4): error TS1128: Declaration or statement expected.
+src/registry/componentsRegistry.ts(56,9): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(57,13): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(58,16): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(59,9): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(60,17): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(61,14): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(62,13): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(66,20): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(68,18): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(69,17): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(70,6): error TS1128: Declaration or statement expected.
+src/registry/componentsRegistry.ts(73,22): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(73,66): error TS1434: Unexpected keyword or identifier.
+src/registry/componentsRegistry.ts(73,143): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(75,27): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(75,40): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(75,50): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(75,58): error TS1005: ';' expected.
+src/registry/componentsRegistry.ts(86,1): error TS1128: Declaration or statement expected.

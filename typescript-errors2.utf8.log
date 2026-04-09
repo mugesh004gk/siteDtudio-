@@ -1,0 +1,15 @@
+﻿src/components/Layout.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/Layout.tsx(3,72): error TS6133: 'BookOpen' is declared but its value is never read.
+src/components/library/Hero1.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/components/library/Navbar1.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/Builder.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/pages/Builder.tsx(16,9): error TS6133: 'moveDown' is declared but its value is never read.
+src/pages/CategoryPage.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/CategoryPage.tsx(5,1): error TS6133: 'extractTailwindClasses' is declared but its value is never read.
+src/pages/ComponentDetail.tsx(1,8): error TS6133: 'React' is declared but its value is never read.
+src/pages/ComponentsList.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/Docs.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/Home.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/Templates.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/pages/Theme.tsx(1,1): error TS6133: 'React' is declared but its value is never read.
+src/utils/helpers.ts(1,40): error TS6133: 'code' is declared but its value is never read.
