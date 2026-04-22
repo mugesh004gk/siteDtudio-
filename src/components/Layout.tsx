@@ -22,23 +22,23 @@ export default function Layout() {
   }
 
   return (
-    <div className="min-h-screen bg-[#09090b] flex flex-col">
+    <div className="min-h-screen bg-[#09090b] flex flex-col px-2 sm:px-4 md:px-0">
       {/* Navbar */}
       <header className="sticky top-0 z-50 bg-[#18181b]/90 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-4 md:px-6 h-16 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 h-16 flex items-center justify-between min-h-[56px]">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 font-extrabold text-lg tracking-tight">
+          <Link to="/" className="flex items-center gap-2.5 font-extrabold text-lg tracking-tight min-w-[44px] min-h-[44px]">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-sm shadow-lg shadow-indigo-500/20">S</div>
             <span className="text-white">Site<span className="text-indigo-400">Studio</span></span>
           </Link>
 
           {/* Desktop nav */}
-          <nav className="hidden md:flex items-center gap-1">
+          <nav className="hidden md:flex items-center gap-1 overflow-x-auto">
             {navLinks.map(({ to, label, icon: Icon }) => {
               const active = location.pathname.startsWith(to);
               return (
                 <Link key={to} to={to}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-medium transition-all ${active ? 'bg-indigo-500/10 text-indigo-400' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
+                  className={`flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all min-w-[44px] min-h-[44px] ${active ? 'bg-indigo-500/10 text-indigo-400' : 'text-white/50 hover:text-white hover:bg-white/5'}`}>
                   <Icon size={15} />
                   {label}
                 </Link>
@@ -49,7 +49,7 @@ export default function Layout() {
           {/* Right side */}
           <div className="flex items-center gap-3">
             <Link to="/builder"
-              className="relative hidden md:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-indigo-600/20">
+              className="relative hidden md:flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-xl font-semibold text-sm transition-all shadow-lg shadow-indigo-600/20 min-w-[44px] min-h-[44px]">
               <Wrench size={14} />
               Open Builder
               {selectedComponents.length > 0 && (
@@ -60,7 +60,7 @@ export default function Layout() {
             </Link>
 
             {/* Mobile hamburger */}
-            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden text-white/60 hover:text-white">
+            <button onClick={() => setMobileOpen(!mobileOpen)} className="md:hidden text-white/60 hover:text-white min-w-[44px] min-h-[44px]">
               {mobileOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
           </div>
@@ -71,10 +71,10 @@ export default function Layout() {
           {mobileOpen && (
             <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
               className="md:hidden border-t border-white/5 bg-[#18181b] overflow-hidden">
-              <div className="px-4 py-3 flex flex-col gap-1">
+              <div className="px-2 sm:px-4 py-3 flex flex-col gap-1">
                 {navLinks.map(({ to, label, icon: Icon }) => (
                   <Link key={to} to={to} onClick={() => setMobileOpen(false)}
-                    className={`flex items-center gap-2.5 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${location.pathname.startsWith(to) ? 'bg-indigo-500/10 text-indigo-400' : 'text-white/60 hover:text-white hover:bg-white/5'}`}>
+                    className={`flex items-center gap-2.5 px-4 py-3 rounded-xl text-sm font-medium transition-colors min-w-[44px] min-h-[44px] ${location.pathname.startsWith(to) ? 'bg-indigo-500/10 text-indigo-400' : 'text-white/60 hover:text-white hover:bg-white/5'}`}>
                     <Icon size={16} />{label}
                   </Link>
                 ))}
