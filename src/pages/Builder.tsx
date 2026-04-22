@@ -6,9 +6,10 @@ import {
   Settings, Layers, Save, Code, Share2, Palette, FileText, X, Rocket, CheckCircle2, SlidersHorizontal, Type, Box, Globe
 } from 'lucide-react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
+import Frame from 'react-frame-component';
 
 export default function Builder() {
   const { sections, order, removeComponent, moveComponent, clearComponents, setSections, updateSection, projectName, setProjectName } = useBuilderStore();
@@ -18,6 +19,23 @@ export default function Builder() {
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [selectedSection, setSelectedSection] = useState<SelectedComponent | null>(null);
+
+  const [frameStyles, setFrameStyles] = useState<any[]>([]);
+
+  useEffect(() => {
+    const getStyles = () => {
+      const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((el, i) => {
+        if (el.tagName === 'STYLE') return <style key={i} dangerouslySetInnerHTML={{ __html: el.innerHTML }} />;
+        if (el.tagName === 'LINK') return <link key={i} rel="stylesheet" href={(el as HTMLLinkElement).href} />;
+        return null;
+      });
+      setFrameStyles(styles);
+    };
+    getStyles();
+    const observer = new MutationObserver(getStyles);
+    observer.observe(document.head, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   const updateProp = (key: string, value: any) => {
     if (!selectedSection) return;
@@ -216,7 +234,7 @@ export default function Builder() {
 
         {/* Live Rendering Canvas */}
         <div className="flex-1 overflow-y-auto p-20 custom-scrollbar flex flex-col items-center">
-          <div className={`bg-[#09090b] shadow-[0_80px_150px_-50px_rgba(0,0,0,1)] rounded-[4.5rem] overflow-hidden transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] border-[16px] border-[#18181b] ring-1 ring-white/5 ${device === 'desktop' ? 'w-full' : device === 'tablet' ? 'max-w-4xl' : 'max-w-md h-[850px] border-y-[100px]'}`}>
+          <div className={`bg-[#09090b] shadow-[0_80px_150px_-50px_rgba(0,0,0,1)] rounded-[4.5rem] overflow-hidden transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] border-[16px] border-[#18181b] ring-1 ring-white/5 ${device === 'desktop' ? 'w-full' : device === 'tablet' ? 'w-full max-w-4xl' : 'w-full max-w-md h-[850px] border-y-[100px]'}`}>
             {!selectedComponents.length ? (
               <div className="h-[700px] flex items-center justify-center bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.03),transparent)] uppercase">
                  <div className="text-center">
@@ -227,21 +245,41 @@ export default function Builder() {
                  </div>
               </div>
             ) : (
-              selectedComponents.map((item) => {
-                const Component = componentMap[item.componentKey];
-                if (!Component) return <div key={item.id} className="p-32 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-[0.4em] border-y border-rose-500/10">Registry Fault: {item.componentKey}</div>;
-                
-                return (
-                  <div key={item.id} className="relative group/canvas">
-                    <Component {...item.props} />
-                    <div className="absolute inset-0 border-4 border-transparent group-hover/canvas:border-indigo-500/40 pointer-events-none transition-all z-10" />
-                    <div className="absolute top-10 right-10 flex gap-4 opacity-0 group-hover/canvas:opacity-100 transition-all z-20 translate-x-8 group-hover/canvas:translate-x-0">
-                      <button onClick={(e) => { e.stopPropagation(); removeComponent(item.id); if (selectedSection?.id === item.id) setSelectedSection(null); }} className="p-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(225,29,72,0.4)] transition-all active:scale-90"><Trash2 size={20}/></button>
-                      <button onClick={(e) => { e.stopPropagation(); setSelectedSection(item); }} className="p-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(79,70,229,0.4)] transition-all active:scale-90"><Settings size={20}/></button>
+              device === 'desktop' ? (
+                selectedComponents.map((item) => {
+                  const Component = componentMap[item.componentKey];
+                  if (!Component) return <div key={item.id} className="p-32 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-[0.4em] border-y border-rose-500/10">Registry Fault: {item.componentKey}</div>;
+                  
+                  return (
+                    <div key={item.id} className="relative group/canvas">
+                      <Component {...item.props} />
+                      <div className="absolute inset-0 border-4 border-transparent group-hover/canvas:border-indigo-500/40 pointer-events-none transition-all z-10" />
+                      <div className="absolute top-10 right-10 flex gap-4 opacity-0 group-hover/canvas:opacity-100 transition-all z-20 translate-x-8 group-hover/canvas:translate-x-0">
+                        <button onClick={(e) => { e.stopPropagation(); removeComponent(item.id); if (selectedSection?.id === item.id) setSelectedSection(null); }} className="p-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(225,29,72,0.4)] transition-all active:scale-90"><Trash2 size={20}/></button>
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedSection(item); }} className="p-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(79,70,229,0.4)] transition-all active:scale-90"><Settings size={20}/></button>
+                      </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })
+              ) : (
+                <Frame head={<>{frameStyles}</>} style={{ width: '100%', height: '100%', minHeight: '600px', border: 'none', backgroundColor: '#09090b', display: 'block' }}>
+                  {selectedComponents.map((item) => {
+                    const Component = componentMap[item.componentKey];
+                    if (!Component) return <div key={item.id} className="p-32 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-[0.4em] border-y border-rose-500/10">Registry Fault: {item.componentKey}</div>;
+                    
+                    return (
+                      <div key={item.id} className="relative group/canvas">
+                        <Component {...item.props} />
+                        <div className="absolute inset-0 border-4 border-transparent group-hover/canvas:border-indigo-500/40 pointer-events-none transition-all z-10" />
+                        <div className="absolute top-10 right-10 flex gap-4 opacity-0 group-hover/canvas:opacity-100 transition-all z-20 translate-x-8 group-hover/canvas:translate-x-0">
+                          <button onClick={(e) => { e.stopPropagation(); removeComponent(item.id); if (selectedSection?.id === item.id) setSelectedSection(null); }} className="p-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(225,29,72,0.4)] transition-all active:scale-90"><Trash2 size={20}/></button>
+                          <button onClick={(e) => { e.stopPropagation(); setSelectedSection(item); }} className="p-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(79,70,229,0.4)] transition-all active:scale-90"><Settings size={20}/></button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </Frame>
+              )
             )}
           </div>
         </div>

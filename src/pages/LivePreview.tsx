@@ -2,12 +2,29 @@ import { useBuilder } from '../context/BuilderContext';
 import { componentMap } from '../lib/componentMap';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Monitor, Tablet, Smartphone, Globe, Share2, Rocket } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import Frame from 'react-frame-component';
 
 export default function LivePreview() {
   const { selectedComponents } = useBuilder();
   const navigate = useNavigate();
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [frameStyles, setFrameStyles] = useState<any[]>([]);
+
+  useEffect(() => {
+    const getStyles = () => {
+      const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((el, i) => {
+        if (el.tagName === 'STYLE') return <style key={i} dangerouslySetInnerHTML={{ __html: el.innerHTML }} />;
+        if (el.tagName === 'LINK') return <link key={i} rel="stylesheet" href={(el as HTMLLinkElement).href} />;
+        return null;
+      });
+      setFrameStyles(styles);
+    };
+    getStyles();
+    const observer = new MutationObserver(getStyles);
+    observer.observe(document.head, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, []);
 
   if (!selectedComponents.length) {
     return (
@@ -59,13 +76,23 @@ export default function LivePreview() {
       </header>
 
       {/* Preview Frame */}
-      <div className={`transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] mx-auto pt-20 ${device === 'desktop' ? 'w-full' : device === 'tablet' ? 'max-w-4xl mt-12 mb-12 border-[12px] border-[#18181b] shadow-[0_80px_150px_-50px_rgba(0,0,0,1)] rounded-[4rem]' : 'max-w-sm mt-12 mb-12 border-[12px] border-[#18181b] shadow-[0_80px_150px_-50px_rgba(0,0,0,1)] rounded-[4rem] border-y-[80px]'}`}>
-        <div className="bg-[#09090b]">
-           {selectedComponents.map((item) => {
-             const Component = componentMap[item.componentKey];
-             if (!Component) return <div key={item.id} className="p-20 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-widest border-y border-rose-500/10">Registry Error: {item.componentKey}</div>;
-             return <Component key={item.id} {...item.props} />;
-           })}
+      <div className={`transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] mx-auto pt-20 ${device === 'desktop' ? 'w-full' : device === 'tablet' ? 'w-full max-w-4xl mt-12 mb-12 border-[12px] border-[#18181b] shadow-[0_80px_150px_-50px_rgba(0,0,0,1)] rounded-[4rem]' : 'w-full max-w-sm mt-12 mb-12 border-[12px] border-[#18181b] shadow-[0_80px_150px_-50px_rgba(0,0,0,1)] rounded-[4rem] border-y-[80px]'}`}>
+        <div className={`bg-[#09090b] ${device !== 'desktop' ? 'h-[800px] overflow-hidden rounded-[3rem]' : ''}`}>
+           {device === 'desktop' ? (
+             selectedComponents.map((item) => {
+               const Component = componentMap[item.componentKey];
+               if (!Component) return <div key={item.id} className="p-20 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-widest border-y border-rose-500/10">Registry Error: {item.componentKey}</div>;
+               return <Component key={item.id} {...item.props} />;
+             })
+           ) : (
+             <Frame head={<>{frameStyles}</>} style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#09090b', display: 'block' }}>
+               {selectedComponents.map((item) => {
+                 const Component = componentMap[item.componentKey];
+                 if (!Component) return <div key={item.id} className="p-20 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-widest border-y border-rose-500/10">Registry Error: {item.componentKey}</div>;
+                 return <Component key={item.id} {...item.props} />;
+               })}
+             </Frame>
+           )}
         </div>
         
         {/* URL Indicator Bar for Tablet/Mobile */}

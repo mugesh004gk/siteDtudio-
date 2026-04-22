@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   LayoutGrid, List, SlidersHorizontal, Check, Copy, Zap, 
-  X, Eye, Menu as MenuIcon, Rocket, Maximize2, Play, ChevronLeft, ChevronRight, Search, Filter, Camera, Heart, Share2, Plus, Sparkles, ArrowRight, MousePointer2, Monitor
+  X, Eye, Menu as MenuIcon, Rocket, Maximize2, Play, ChevronLeft, ChevronRight, Search, Filter, Camera, Heart, Share2, Plus, Sparkles, ArrowRight, MousePointer2, Monitor, Image as ImageIcon
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useBuilder } from '../context/BuilderContext';
@@ -300,7 +300,7 @@ export default function GalleryLibrary() {
               
               <div className="px-8 md:px-12 py-10 flex items-center justify-between border-b border-white/5 bg-[#09090b]">
                  <div className="flex items-center gap-8">
-                    <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-indigo-600/30"><Image size={32}/></div>
+                    <div className="w-16 h-16 bg-gradient-to-tr from-indigo-600 to-purple-600 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-indigo-600/30"><ImageIcon size={32}/></div>
                     <div>
                        <h2 className="text-3xl md:text-5xl font-black text-white tracking-tighter uppercase leading-none mb-3">{previewGallery.name}</h2>
                        <p className="text-white/30 text-[10px] font-black uppercase tracking-[0.5em]">{previewGallery.tag}</p>
@@ -314,7 +314,7 @@ export default function GalleryLibrary() {
                     {(() => {
                         const ComponentRenderer = (allGalleries as any)[previewGallery.componentName];
                         const props = customProps[previewGallery.id] || previewGallery.defaultProps;
-                        return ComponentRenderer ? <ComponentRenderer {...props} /> : <div className="p-20 text-center opacity-20"><Image size={80} className="mx-auto mb-4"/> UNAVAILABLE</div>
+                        return ComponentRenderer ? <ComponentRenderer {...props} /> : <div className="p-20 text-center opacity-20"><ImageIcon size={80} className="mx-auto mb-4"/> UNAVAILABLE</div>
                     })()}
                  </div>
               </div>

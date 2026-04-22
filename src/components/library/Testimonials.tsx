@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Quote, Star, Play, MessageSquare, ArrowRight, User, TrendingUp, CheckCircle, Award } from 'lucide-react';
+import { Quote, Star, Play, MessageSquare, ArrowRight, User, TrendingUp, CheckCircle, Award, Sparkles } from 'lucide-react';
 
 // ─── HELPER COMPONENTS ───
 
