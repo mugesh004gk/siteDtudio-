@@ -127,52 +127,22 @@ export default function HeroLibrary() {
                 
                 {/* PREVIEW CONTAINER */}
                 {/* PREVIEW CONTAINER */}
-                <div className="relative group/preview inset-0 overflow-hidden rounded-t-[2.5rem]">
-                  {/* PREVIEW CONTAINER */}
-                <div className="relative group/preview inset-0 overflow-hidden rounded-t-[2.5rem]">
-                  {/* PREVIEW CONTAINER */}
-                <div className="relative group/preview inset-0 overflow-hidden rounded-t-[2.5rem]">
-                  {/* PREVIEW CONTAINER */}
-                <div className="relative group/preview inset-0 overflow-hidden rounded-t-[2.5rem]">
-                  <PreviewContainer height={600} width={1440}>
-                    {ComponentRenderer ? <ComponentRenderer {...currentProps} isPreview={true} /> : <div className="p-20 text-white uppercase text-xs font-black tracking-widest text-center">Hero Loading...</div>}
-                </PreviewContainer>
+                <div className="relative group/preview overflow-hidden rounded-t-[2.5rem] bg-[#09090b]">
+                  <PreviewContainer height={500} width={1440}>
+                    {ComponentRenderer ? (
+                      <ComponentRenderer {...currentProps} isPreview={true} />
+                    ) : (
+                      <div className="p-20 text-white uppercase text-[10px] font-black tracking-[0.3em] text-center opacity-50">
+                        Architectural Module Loading...
+                      </div>
+                    )}
+                  </PreviewContainer>
                   
-                  <div className="absolute bottom-4 right-4 opacity-0 group-hover/preview:opacity-100 flex gap-2 transition-opacity duration-300 z-50">
-                     <button onClick={(e) => { e.stopPropagation(); handleCustomize(hero); }} className="bg-indigo-600/90 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 shadow-xl backdrop-blur-md">
+                  <div className="absolute bottom-4 right-4 opacity-0 group-hover/preview:opacity-100 flex gap-2 transition-all duration-300 z-50 transform translate-y-2 group-hover/preview:translate-y-0">
+                     <button onClick={(e) => { e.stopPropagation(); handleCustomize(hero); }} className="bg-indigo-600/90 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 shadow-xl backdrop-blur-md transition-all">
                          <SlidersHorizontal size={14}/> Customize
                      </button>
-                     <button onClick={(e) => { e.stopPropagation(); handleCopyCode(hero); }} className="bg-[#18181b]/90 border border-white/10 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[#1f1f23]/90 shadow-xl backdrop-blur-md">
-                         <Copy size={14}/> Copy Code
-                     </button>
-                  </div>
-                </div>
-                  
-                  <div className="absolute bottom-4 right-4 opacity-0 group-hover/preview:opacity-100 flex gap-2 transition-opacity duration-300 z-50">
-                     <button onClick={(e) => { e.stopPropagation(); handleCustomize(hero); }} className="bg-indigo-600/90 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 shadow-xl backdrop-blur-md">
-                         <SlidersHorizontal size={14}/> Customize
-                     </button>
-                     <button onClick={(e) => { e.stopPropagation(); handleCopyCode(hero); }} className="bg-[#18181b]/90 border border-white/10 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[#1f1f23]/90 shadow-xl backdrop-blur-md">
-                         <Copy size={14}/> Copy Code
-                     </button>
-                  </div>
-                </div>
-                  
-                  <div className="absolute bottom-4 right-4 opacity-0 group-hover/preview:opacity-100 flex gap-2 transition-opacity duration-300 z-50">
-                     <button onClick={(e) => { e.stopPropagation(); handleCustomize(hero); }} className="bg-indigo-600/90 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 shadow-xl backdrop-blur-md">
-                         <SlidersHorizontal size={14}/> Customize
-                     </button>
-                     <button onClick={(e) => { e.stopPropagation(); handleCopyCode(hero); }} className="bg-[#18181b]/90 border border-white/10 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[#1f1f23]/90 shadow-xl backdrop-blur-md">
-                         <Copy size={14}/> Copy Code
-                     </button>
-                  </div>
-                </div>
-                  
-                  <div className="absolute bottom-4 right-4 opacity-0 group-hover/preview:opacity-100 flex gap-2 transition-opacity duration-300 z-50">
-                     <button onClick={(e) => { e.stopPropagation(); handleCustomize(hero); }} className="bg-indigo-600/90 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-indigo-500 shadow-xl backdrop-blur-md">
-                         <SlidersHorizontal size={14}/> Customize
-                     </button>
-                     <button onClick={(e) => { e.stopPropagation(); handleCopyCode(hero); }} className="bg-[#18181b]/90 border border-white/10 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[#1f1f23]/90 shadow-xl backdrop-blur-md">
+                     <button onClick={(e) => { e.stopPropagation(); handleCopyCode(hero); }} className="bg-[#18181b]/90 border border-white/10 text-white px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest flex items-center gap-2 hover:bg-[#1f1f23]/90 shadow-xl backdrop-blur-md transition-all">
                          <Copy size={14}/> Copy Code
                      </button>
                   </div>

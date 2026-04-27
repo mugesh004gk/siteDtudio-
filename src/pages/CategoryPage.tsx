@@ -5,13 +5,13 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { mockComponents } from '../lib/mockData';
 import { previewMap } from '../lib/previewMap';
-import { useBuilder } from '../context/BuilderContext';
-import {  Eye, Check, ArrowLeft, Filter, Grid, List, X, Zap, Component } from 'lucide-react';
+import { useBuilderStore } from '../store/useBuilderStore';
+import { Eye, ArrowLeft, Grid, List, X, Zap, Wand2, Sparkles } from 'lucide-react';
 
 export default function CategoryPage() {
   const { category: slug } = useParams<{ category: string }>();
   const navigate = useNavigate();
-  const { addComponent } = useBuilder();
+  const { addComponent } = useBuilderStore();
   const [components, setComponents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewComp, setPreviewComp] = useState<any>(null);
@@ -19,7 +19,6 @@ export default function CategoryPage() {
 
   useEffect(() => {
     const fetchComponents = async () => {
-      // Immediate mock load
       const filteredMocks = mockComponents.filter(c => c.category === slug).map((c, i) => ({ id: `m${i}`, ...c }));
       setComponents(filteredMocks);
       setLoading(false);
@@ -49,140 +48,147 @@ export default function CategoryPage() {
 
   if (loading) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center">
-        <div className="w-16 h-16 border-4 border-indigo-500/20 border-t-indigo-500 rounded-full animate-spin mb-4" />
-        <p className="text-white/40 font-black uppercase tracking-widest text-xs">Loading components...</p>
-      </div>
-    );
-  }
-
-  if (!components.length) {
-    return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-24 h-24 bg-rose-500/10 rounded-3xl flex items-center justify-center text-rose-500 mb-8 border border-rose-500/10 shadow-inner">
-          <Filter size={48} />
-        </div>
-        <h1 className="text-4xl font-black text-white mb-4">No components found.</h1>
-        <p className="text-lg text-white/30 max-w-md mx-auto mb-10 leading-relaxed">We haven't cataloged any components for the <span className="text-indigo-400 font-bold uppercase">{slug}</span> category yet.</p>
-        <button onClick={() => navigate('/components')} className="bg-white/5 hover:bg-white/10 text-white px-10 py-5 rounded-2xl font-black uppercase tracking-widest text-xs transition-all border border-white/5 active:scale-95 shadow-2xl">Back to Directory</button>
+      <div className="min-h-[80vh] flex flex-col items-center justify-center bg-[#020617]">
+        <div className="w-12 h-12 border-4 border-purple-500/10 border-t-purple-500 rounded-full animate-spin mb-4" />
+        <p className="text-slate-500 font-black text-[10px] uppercase tracking-widest">Loading Modules...</p>
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-6 py-8 md:py-16">
-      <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 md:mb-16 gap-6 md:gap-10">
-        <div className="flex-1">
-          <button onClick={() => navigate('/components')} className="text-indigo-400 hover:text-indigo-300 text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-3 mb-6 md:mb-8 group transition-all">
-            <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> Directory Overview
-          </button>
-          <div className="flex items-center gap-6 mb-4 md:mb-6">
-            <h1 className="text-4xl md:text-7xl font-black text-white tracking-tighter leading-none uppercase">{slug}</h1>
+    <div className="bg-[#020617] min-h-screen">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-8">
+          <div className="flex-1">
+            <button onClick={() => navigate('/components')} className="text-purple-400 hover:text-purple-300 text-[10px] font-black uppercase tracking-widest flex items-center gap-2 mb-6 group transition-all">
+              <ArrowLeft size={14} className="group-hover:-translate-x-1 transition-transform" /> 
+              Back to Registry
+            </button>
+            <div className="flex items-center gap-4 mb-4">
+              <h1 className="text-4xl md:text-7xl font-black text-white tracking-tighter uppercase leading-none">{slug}</h1>
+              <div className="px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-[10px] font-black uppercase tracking-widest">
+                {components.length} Modules
+              </div>
+            </div>
+            <p className="text-slate-400 text-lg max-w-2xl leading-relaxed font-medium">
+              Hyper-optimized <span className="text-white font-bold">{slug}</span> architectures for high-fidelity web experiences.
+            </p>
           </div>
-          <p className="text-sm md:text-xl text-white/30 max-w-2xl leading-relaxed font-medium">Browsing <span className="text-white font-black">{components.length}</span> premium components in the industrial {slug} registry.</p>
-        </div>
-        
-        <div className="flex items-center gap-2 bg-[#18181b] p-1.5 rounded-2xl border border-white/5 shadow-2xl self-end md:self-auto">
-           <button onClick={() => setView('grid')} className={`p-3 md:p-4 rounded-xl transition-all ${view === 'grid' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-white/20 hover:text-white'}`}>
-             <Grid size={18} />
-           </button>
-           <button onClick={() => setView('list')} className={`p-3 md:p-4 rounded-xl transition-all ${view === 'list' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-600/20' : 'text-white/20 hover:text-white'}`}>
-             <List size={18} />
-           </button>
-        </div>
-      </div>
-
-      <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10" : "flex flex-col gap-6 md:gap-8"}>
-        {components.map((comp, idx) => {
-          const Preview = previewMap[comp.componentKey] || (() => <div className="w-full h-full bg-[#09090b] flex items-center justify-center text-white/10 uppercase font-black tracking-widest text-[10px]">No Preview Available</div>);
           
-          return (
-            <motion.div 
-              key={comp.id} 
-              initial={{ opacity: 0, y: 40 }} 
-              animate={{ opacity: 1, y: 0 }} 
-              transition={{ delay: idx * 0.05, duration: 0.5 }}
-              className={`bg-[#18181b] rounded-3xl md:rounded-[3rem] border border-white/5 overflow-hidden group hover:border-indigo-500/40 transition-all duration-500 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.7)] hover:shadow-indigo-500/10 ${view === 'list' ? 'md:flex md:items-center' : ''}`}
-            >
-              <div className={`relative bg-[#09090b] shadow-inner overflow-hidden ${view === 'grid' ? 'h-72 md:h-[500px]' : 'w-full md:w-[28rem] h-56 md:h-full md:border-r border-white/5'} flex items-center justify-center`}>
-                <div className="w-full h-full border border-white/5 overflow-y-auto overflow-x-hidden relative bg-black/40 backdrop-blur-sm custom-scrollbar origin-top scale-[0.75] md:scale-[0.6] transition-transform duration-700">
-                    <div className="w-[133%] md:w-[166%] origin-top">
-                        <Preview isPreview={true} />
-                    </div>
-                </div>
-                {comp.isPremium && <div className="absolute top-4 md:top-6 left-4 md:left-6 bg-amber-500 text-[#09090b] text-[10px] font-black uppercase tracking-widest px-3 py-2 rounded-xl shadow-xl z-30">Premium</div>}
-              </div>
+          <div className="flex items-center gap-1 p-1 bg-[#0f172a] rounded-xl border border-white/5 shadow-lg">
+            <button onClick={() => setView('grid')} className={`p-2 rounded-lg transition-all ${view === 'grid' ? 'bg-purple-600 text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]' : 'text-slate-500 hover:text-white'}`}>
+              <Grid size={18} />
+            </button>
+            <button onClick={() => setView('list')} className={`p-2 rounded-lg transition-all ${view === 'list' ? 'bg-purple-600 text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]' : 'text-slate-500 hover:text-white'}`}>
+              <List size={18} />
+            </button>
+          </div>
+        </div>
 
-              <div className="p-6 md:p-12 flex-1">
-                <div className="flex items-center gap-3 mb-3 md:mb-4 text-[10px] font-black uppercase tracking-widest">
-                   <span className="text-indigo-400 leading-none">{comp.category}</span>
-                   <div className="w-1.5 h-1.5 bg-white/10 rounded-full"></div>
-                   <span className="text-white/20 leading-none">{comp.type || 'Standard'}</span>
+        <div className={view === 'grid' ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" : "flex flex-col gap-6"}>
+          {components.map((comp, idx) => {
+            const Preview = previewMap[comp.componentKey] || (() => <div className="w-full h-full bg-[#020617] flex items-center justify-center text-slate-800 text-[10px] font-black uppercase tracking-widest">NO PREVIEW</div>);
+            
+            return (
+              <motion.div 
+                key={comp.id} 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ delay: idx * 0.05 }}
+              >
+                <div 
+                  className={`group block h-[340px] bg-[#111827] p-5 rounded-[2rem] border border-white/5 hover:border-purple-500/50 transition-all hover:scale-105 shadow-2xl relative overflow-hidden ${view === 'list' ? 'md:flex md:items-center md:h-auto' : ''}`}
+                >
+                  <div className={`relative bg-[#020617] overflow-hidden rounded-2xl mb-5 ${view === 'grid' ? 'h-40' : 'w-full md:w-80 h-48 md:mb-0 md:mr-6'} flex items-center justify-center border border-white/5 shadow-inner`}>
+                    <div className="w-full h-full scale-[0.5] origin-top p-2">
+                      <Preview isPreview={true} />
+                    </div>
+                    <div className="absolute inset-0 bg-purple-600/5 pointer-events-none" />
+                    {comp.isPremium && (
+                      <div className="absolute top-3 left-3 bg-amber-500 text-white text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded shadow-lg z-10">
+                        Elite
+                      </div>
+                    )}
+                    <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity bg-purple-600/20 flex items-center justify-center backdrop-blur-[2px]">
+                      <button onClick={() => setPreviewComp(comp)} className="px-4 py-1.5 bg-white text-purple-600 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-2xl active:scale-95 transform translate-y-2 group-hover:translate-y-0 transition-all duration-300">
+                        Scan Module
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1.5 text-[9px] font-black text-purple-400 uppercase tracking-[0.2em]">
+                      <span>{comp.type || 'Standard'} Architecture</span>
+                    </div>
+                    <h3 className="text-xl font-black text-white mb-2 group-hover:text-purple-400 transition-colors truncate tracking-tight uppercase">
+                      {comp.name}
+                    </h3>
+                    <p className="text-slate-500 text-xs mb-6 line-clamp-2 leading-relaxed font-medium">
+                      {comp.description}
+                    </p>
+                    
+                    <div className="flex items-center gap-3">
+                      <button onClick={() => handleUseThis(comp.componentKey)}
+                        className="flex-1 py-2.5 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-lg shadow-purple-600/20 flex items-center justify-center gap-2">
+                        <Wand2 size={16} /> Deploy
+                      </button>
+                      <button onClick={() => setPreviewComp(comp)}
+                        className="p-2.5 bg-[#020617] hover:bg-purple-500/10 text-slate-500 hover:text-purple-400 rounded-xl transition-all border border-white/5">
+                        <Eye size={18} />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <h3 className="text-2xl md:text-3xl font-black text-white mb-3 md:mb-4 leading-none group-hover:text-indigo-400 transition-colors uppercase tracking-tighter">{comp.name}</h3>
-                <p className="text-sm md:text-base text-white/30 mb-6 md:mb-10 line-clamp-2 md:line-clamp-none leading-relaxed font-medium">{comp.description}</p>
-                
-                <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
-                  <button onClick={() => setPreviewComp(comp)}
-                    className="flex-1 flex items-center justify-center gap-3 py-4 md:py-5 bg-white/5 hover:bg-white/10 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl border border-white/5 transition-all active:scale-95 shadow-xl">
-                    <Eye size={18} /> View
-                  </button>
-                  <button onClick={() => handleUseThis(comp.componentKey)}
-                    className="flex-1 flex items-center justify-center gap-3 py-4 md:py-5 text-[10px] font-black uppercase tracking-widest rounded-2xl transition-all shadow-2xl active:scale-95 bg-indigo-600 hover:bg-indigo-500 text-white shadow-indigo-600/40">
-                    <Component size={18} strokeWidth={4} /> Use This
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          );
-        })}
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
 
       <AnimatePresence>
         {previewComp && (
-           <div className="fixed inset-0 z-[200] flex items-center justify-center p-0 md:p-10">
+           <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 md:p-12">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 
                 onClick={() => setPreviewComp(null)}
-                className="absolute inset-0 bg-black/95 backdrop-blur-xl" />
+                className="absolute inset-0 bg-black/90 backdrop-blur-sm" />
               
-              <motion.div initial={{ scale: 0.95, opacity: 0, y: 30 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 30 }}
-                className="relative w-full h-full max-w-7xl md:max-h-[85vh] bg-[#09090b] overflow-hidden md:rounded-[3rem] border border-white/10 shadow-[0_0_100px_rgba(0,0,0,1)] flex flex-col">
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}
+                className="relative w-full max-w-6xl h-full max-h-[90vh] bg-[#0f172a] border border-white/10 shadow-2xl rounded-[3rem] overflow-hidden flex flex-col">
                 
-                {/* MODAL HEADER */}
-                <div className="p-6 md:p-10 flex items-center justify-between border-b border-white/5 bg-[#111] z-10">
-                  <div className="flex items-center gap-4 md:gap-6">
-                    <div className="w-10 md:w-12 h-10 md:h-12 bg-indigo-500 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
-                      <Zap className="text-white w-5 md:w-6 h-5 md:h-6" />
+                <div className="px-8 py-5 flex items-center justify-between bg-[#020617]/80 backdrop-blur-md border-b border-white/5">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-600 to-blue-600 rounded-2xl flex items-center justify-center text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]">
+                      <Zap size={24} />
                     </div>
                     <div>
-                      <h2 className="text-xl md:text-3xl font-black text-white tracking-tighter uppercase leading-none mb-1 md:mb-2">{previewComp.name}</h2>
-                      <p className="text-white/40 text-[10px] font-black uppercase tracking-[0.3em]">{previewComp.category}</p>
+                      <h2 className="text-2xl font-black text-white truncate uppercase tracking-tight">{previewComp.name}</h2>
+                      <p className="text-[10px] text-purple-400 font-black uppercase tracking-[0.3em]">{previewComp.category} System</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <button onClick={() => handleUseThis(previewComp.componentKey)} className="hidden md:flex bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] items-center gap-3 transition-all shadow-xl shadow-indigo-600/20 active:scale-95">
-                      Add to Builder
+                    <button onClick={() => handleUseThis(previewComp.componentKey)} className="hidden md:flex items-center gap-3 bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-500 hover:to-blue-500 text-white px-8 py-3 rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl active:scale-95 transition-all">
+                      <Wand2 size={18} /> Deploy Module
                     </button>
-                    <button onClick={() => setPreviewComp(null)} className="p-3 md:p-4 bg-white/5 hover:bg-white/10 text-white/50 hover:text-white rounded-xl md:rounded-2xl transition-all border border-white/5 shadow-xl">
-                      <X size={20} />
+                    <button onClick={() => setPreviewComp(null)} className="p-3 bg-[#020617] hover:bg-rose-500/10 text-slate-500 hover:text-rose-500 rounded-2xl transition-all border border-white/5">
+                      <X size={24} />
                     </button>
                   </div>
                 </div>
 
-                {/* MODAL CANVAS */}
-                <div className="flex-1 overflow-auto bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.05),transparent)] flex items-start justify-center p-6 md:p-24 relative">
-                  <div className="w-full relative shadow-[0_50px_100px_-20px_rgba(0,0,0,0.5)] border border-white/5 rounded-2xl overflow-hidden bg-[#09090b]">
+                <div className="flex-1 overflow-auto bg-white p-8 md:p-12 relative">
+                   {/* Grid Overlay for Canvas feel */}
+                  <div className="absolute inset-0 opacity-5 pointer-events-none" style={{ backgroundImage: 'radial-gradient(#000 1px, transparent 1px)', backgroundSize: '20px 20px' }} />
+                  <div className="max-w-5xl mx-auto shadow-2xl border border-slate-200 rounded-3xl overflow-hidden relative z-10">
                     {(() => {
                       const Preview = previewMap[previewComp.componentKey];
-                      return Preview ? <Preview /> : <div className="p-20 text-center text-white/20 font-black uppercase tracking-widest text-[10px]">No Interactive Preview Available</div>;
+                      return Preview ? <Preview /> : <div className="p-20 text-center text-slate-400 font-black uppercase tracking-widest">Architectural Preview Missing</div>;
                     })()}
                   </div>
                 </div>
 
-                {/* MOBILE MODAL FOOTER */}
-                <div className="md:hidden p-6 border-t border-white/5 bg-[#111]">
-                   <button onClick={() => handleUseThis(previewComp.componentKey)} className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-5 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] flex items-center justify-center gap-3 active:scale-95 shadow-2xl">
-                      <Zap size={18} fill="currentColor" /> Add to Builder
+                <div className="md:hidden p-6 border-t border-white/5 bg-[#020617]/80">
+                   <button onClick={() => handleUseThis(previewComp.componentKey)} className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-5 rounded-2xl font-black uppercase tracking-widest flex items-center justify-center gap-3 shadow-xl">
+                      <Wand2 size={20} /> Deploy Module
                    </button>
                 </div>
               </motion.div>

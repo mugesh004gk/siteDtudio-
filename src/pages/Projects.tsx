@@ -4,7 +4,8 @@ import { db } from '../lib/firebase';
 import { useBuilderStore } from '../store/useBuilderStore';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FolderHeart, Trash2, Edit3, Calendar, Layers, ExternalLink } from 'lucide-react';
+import { FolderHeart, Trash2, Edit3, Calendar, Layers, ExternalLink, Plus, LayoutGrid, Clock, Settings, Sparkles } from 'lucide-react';
+import { Button, Card } from '../components/ui/StandardUI';
 
 interface Project {
   id: string;
@@ -17,7 +18,7 @@ interface Project {
 export default function Projects() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
-  const { setSections, setProjectName } = useBuilderStore();
+  const { setSections, setProjectName, clearComponents } = useBuilderStore();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -43,7 +44,7 @@ export default function Projects() {
     if (project.sections) {
       const mappedSections = project.sections.map((s: any) => ({
         id: s.id,
-        componentKey: s.type,
+        componentKey: s.type || s.componentKey,
         props: s.props
       }));
       setSections(mappedSections);
@@ -60,7 +61,6 @@ export default function Projects() {
         setProjects(projects.filter(p => p.id !== id));
       } catch (error) {
         console.error("Error deleting project", error);
-        alert("Failed to delete project.");
       }
     }
   };
@@ -68,84 +68,121 @@ export default function Projects() {
   const formatDate = (date: any) => {
     if (!date) return "Unknown date";
     const d = date.toDate ? date.toDate() : new Date(date);
-    return d.toLocaleDateString();
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const handleCreateNew = () => {
+    clearComponents();
+    setProjectName("New Project");
+    navigate('/builder');
   };
 
   return (
-    <div className="min-h-[calc(100vh-64px)] bg-[#09090b] p-8 md:p-12">
-      <div className="max-w-7xl mx-auto space-y-12">
-        <div className="flex items-center gap-4">
-          <div className="p-4 bg-indigo-500/10 rounded-2xl border border-indigo-500/20 text-indigo-400">
-             <FolderHeart size={32}/>
-          </div>
-          <div>
-            <h1 className="text-4xl font-black text-white uppercase tracking-tighter">Your Workspace</h1>
-            <p className="text-white/40 font-medium mt-1 tracking-widest text-sm uppercase">Manage saved SaaS projects</p>
-          </div>
-        </div>
+    <div className="flex-1 bg-[#020617] flex">
+      {/* Mini Sidebar for Dashboard feel */}
+      <aside className="w-64 border-r border-white/5 bg-[#0f172a] hidden lg:flex flex-col p-6 gap-2">
+        <div className="text-[10px] font-black text-slate-600 uppercase tracking-widest mb-4 px-4">Workspace</div>
+        <button className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-purple-600/20 to-blue-600/20 text-white text-sm font-bold border border-purple-500/30 shadow-[0_0_15px_rgba(139,92,246,0.1)]">
+          <LayoutGrid size={18} /> All Projects
+        </button>
+        <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 text-sm font-bold transition-all">
+          <Clock size={18} /> Recent
+        </button>
+        <button className="flex items-center gap-3 px-4 py-3 rounded-xl text-slate-500 hover:text-white hover:bg-white/5 text-sm font-bold transition-all">
+          <Settings size={18} /> Settings
+        </button>
+      </aside>
 
-        {loading ? (
-          <div className="text-white/30 text-center py-20 font-black tracking-widest uppercase text-sm animate-pulse">Loading Workspace...</div>
-        ) : projects.length === 0 ? (
-          <div className="text-center py-32 border border-white/5 bg-[#111] rounded-[3rem] shadow-2xl">
-              <FolderHeart size={48} className="mx-auto text-white/10 mb-6"/>
-              <p className="text-white/40 uppercase tracking-[0.3em] font-black text-xs mb-8">No saved projects found</p>
-              <button onClick={() => navigate('/components')} className="bg-indigo-600 hover:bg-indigo-500 text-white px-8 py-4 rounded-xl text-xs font-black uppercase tracking-widest shadow-xl transition active:scale-95">Start Building</button>
+      <main className="flex-1 p-8 md:p-12 overflow-y-auto">
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+            <div>
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-[10px] font-black uppercase tracking-widest mb-4">
+                <Sparkles size={12} /> Live Sites
+              </div>
+              <h1 className="text-4xl font-black text-white tracking-tight mb-2">Projects</h1>
+              <p className="text-slate-400 font-medium">Manage your futuristic web architectures.</p>
+            </div>
+            <Button onClick={handleCreateNew} className="h-12 px-6">
+              <Plus size={20} /> New Project
+            </Button>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {projects.map(project => (
-              <motion.div key={project.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} 
-                className="bg-[#111] rounded-[2rem] border border-white/5 overflow-hidden group shadow-xl hover:border-indigo-500/30 transition-colors">
-                
-                <div className="h-48 bg-[#18181b] relative overflow-hidden flex items-center justify-center p-6 cursor-pointer" onClick={() => handleLoadProject(project)}>
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(99,102,241,0.1),transparent_70%)] opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
-                    <div className="w-full flex gap-2 flex-wrap items-center justify-center pointer-events-none relative z-10 transition-transform group-hover:scale-110 duration-500">
-                        {project.componentKeys?.slice(0, 4).map((c: string, i: number) => (
-                            <div key={i} className="px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-lg text-[8px] font-black uppercase text-indigo-300 tracking-widest border border-white/10">{c.split('-')[0]}</div>
-                        ))}
-                        {project.componentKeys?.length > 4 && <div className="px-3 py-1.5 bg-black/60 rounded-lg text-[8px] font-black text-white/50 border border-white/10 tracking-widest">+{project.componentKeys.length - 4}</div>}
-                        {(!project.componentKeys || project.componentKeys.length === 0) && (
-                          <div className="px-3 py-1.5 bg-black/60 rounded-lg text-[8px] font-black text-white/20 border border-white/10 tracking-widest">EMPTY STACK</div>
-                        )}
-                    </div>
-                    <div className="absolute inset-0 bg-black/20 group-hover:bg-transparent transition-colors" />
-                </div>
 
-                <div className="p-6">
-                   <div className="flex justify-between items-start mb-6">
-                      <div>
-                          <h3 className="text-xl font-black text-white tracking-tight leading-none mb-2">{project.name || "Untitled"}</h3>
-                          <div className="flex items-center gap-2 text-white/30 text-[10px] font-black uppercase tracking-widest">
-                             <Calendar size={12}/>
-                             {formatDate(project.createdAt)}
+          {loading ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-64 bg-[#0f172a] rounded-2xl animate-pulse border border-white/5" />
+              ))}
+            </div>
+          ) : projects.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-32 bg-[#0f172a]/50 border border-white/5 rounded-3xl text-center">
+              <div className="w-20 h-20 bg-[#020617] rounded-2xl flex items-center justify-center text-slate-700 mb-6 border border-white/5 shadow-inner">
+                <FolderHeart size={40} />
+              </div>
+              <h3 className="text-xl font-bold text-white mb-2">Empty Workspace</h3>
+              <p className="text-slate-500 mb-8 max-w-xs font-medium">Your architectural journey begins here. Start building the future.</p>
+              <Button onClick={handleCreateNew}>Get Started</Button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {projects.map(project => (
+                <motion.div key={project.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                  <Card className="group hover:border-purple-500/50 transition-all duration-300">
+                    <div 
+                      className="h-44 bg-[#020617] relative overflow-hidden flex items-center justify-center cursor-pointer border-b border-white/5"
+                      onClick={() => handleLoadProject(project)}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-purple-500/5 to-blue-500/5 group-hover:opacity-100 transition-opacity" />
+                      <div className="flex gap-2 flex-wrap items-center justify-center p-4">
+                        {project.componentKeys?.slice(0, 3).map((c, i) => (
+                          <div key={i} className="px-2 py-1 bg-[#0f172a] border border-white/5 rounded-md text-[9px] font-black text-purple-400 uppercase tracking-wider">
+                            {c.split('-')[0]}
                           </div>
+                        ))}
                       </div>
-                   </div>
+                      <div className="absolute inset-0 opacity-0 group-hover:opacity-100 bg-purple-600/10 flex items-center justify-center backdrop-blur-[2px] transition-all">
+                        <Button variant="primary" className="scale-90 group-hover:scale-100">Open Architect</Button>
+                      </div>
+                    </div>
 
-                   <div className="flex items-center justify-between border-t border-white/5 pt-6 gap-2">
-                      <div className="flex items-center gap-2 text-white/50 text-[10px] font-black uppercase tracking-widest bg-white/5 px-3 py-2 rounded-lg border border-white/5">
-                         <Layers size={12}/> {project.sections?.length || 0}
+                    <div className="p-6">
+                      <div className="mb-6">
+                        <h3 className="text-lg font-bold text-white mb-1 group-hover:text-purple-400 transition-colors truncate tracking-tight">
+                          {project.name || "Untitled Project"}
+                        </h3>
+                        <div className="flex items-center gap-2 text-slate-500 text-[10px] font-black uppercase tracking-widest">
+                          <Calendar size={12} />
+                          {formatDate(project.createdAt)}
+                        </div>
                       </div>
 
-                      <div className="flex gap-2 relative z-20">
-                         <button onClick={(e) => handleDeleteProject(project.id, e)} className="p-3 bg-red-500/10 text-red-400 hover:text-white hover:bg-red-500 rounded-xl transition-all active:scale-95" title="Delete Project">
-                            <Trash2 size={16}/>
-                         </button>
-                         <button onClick={() => handleLoadProject(project, '/live-preview')} className="p-3 bg-indigo-500/10 text-indigo-400 hover:text-white hover:bg-indigo-500 rounded-xl transition-all active:scale-95" title="Preview Live">
-                             <ExternalLink size={16}/>
-                         </button>
-                         <button onClick={() => handleLoadProject(project)} className="px-5 py-3 bg-white/10 hover:bg-indigo-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition-all active:scale-95 flex items-center gap-2 border border-white/5">
-                             <Edit3 size={14}/> Edit
-                         </button>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5 text-[9px] font-black text-slate-600 uppercase tracking-widest px-2.5 py-1 bg-[#020617] rounded-md border border-white/5">
+                          <Layers size={12} /> {project.sections?.length || 0} Modules
+                        </div>
+                        <div className="flex gap-2">
+                          <button 
+                            onClick={(e) => handleDeleteProject(project.id, e)}
+                            className="p-2 text-slate-600 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-all"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                          <button 
+                            onClick={() => handleLoadProject(project)}
+                            className="p-2 text-slate-600 hover:text-purple-400 hover:bg-purple-500/10 rounded-lg transition-all"
+                          >
+                            <Edit3 size={16} />
+                          </button>
+                        </div>
                       </div>
-                   </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
-      </div>
+                    </div>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </div>
+      </main>
     </div>
   );
 }

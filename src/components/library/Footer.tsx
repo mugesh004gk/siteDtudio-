@@ -94,8 +94,8 @@ export const FooterNewsletter = ({ bgColor, btnColor, isPreview }: any) => (
                 <p className="text-white/70 text-lg leading-relaxed max-w-md">Join over 10,000 developers receiving weekly UI insights and early access to new libraries.</p>
              </div>
              <div className="flex flex-col sm:flex-row gap-4">
-                <input type="email" placeholder="Email Address" className="flex-1 h-18 bg-white/10 border border-white/20 rounded-2xl px-6 text-white text-sm outline-none focus:bg-white/20 transition shadow-2xl" />
-                <button style={{ color: btnColor }} className="h-18 px-10 bg-white rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-black/20">Subscribe Now</button>
+                <input type="email" placeholder="Email Address" className="flex-1 h-16 bg-white/10 border border-white/20 rounded-2xl px-6 text-white text-sm outline-none focus:bg-white/20 transition shadow-2xl" />
+                <button style={{ color: btnColor }} className="h-16 px-10 bg-white rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-black/20">Subscribe Now</button>
              </div>
           </div>
        </div>
@@ -202,7 +202,7 @@ export const FooterInteractive = ({ bgColor, hoverColor, isPreview }: any) => (
           { label: "LINKEDIN", handle: "SITE-STUDIO-CORP", icon: <Linkedin /> },
           { label: "GITHUB", handle: "GENTIC-UI", icon: <Github /> }
        ].map((item, i) => (
-          <div key={i} className="flex items-center justify-between p-12 bg-white/[0.02] border border-white/5 rounded-[2.5rem] hover:bg-white/[0.05] transition-all group pointer cursor-none">
+          <div key={i} className="flex items-center justify-between p-12 bg-white/[0.02] border border-white/5 rounded-[2.5rem] hover:bg-white/[0.05] transition-all group cursor-pointer">
              <div className="flex items-center gap-10">
                 <span className="text-4xl md:text-6xl font-black text-white/5 group-hover:text-white transition-all group-hover:italic">{item.label}</span>
                 <span className="text-white/20 text-xs font-black uppercase tracking-widest hidden md:block">{item.handle}</span>

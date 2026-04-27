@@ -4,22 +4,53 @@
 
 @layer base {
   :root {
-    --color-primary: #6366f1; /* Indigo 500 */
-    --color-secondary: #a855f7; /* Purple 500 */
-    --color-bg: #09090b; /* Zinc 950 */
-    --color-surface: #18181b; /* Zinc 900 */
-    --color-text: #fafafa; /* Zinc 50 */
-    --font-heading: 'Inter', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    --color-primary: #8b5cf6;
+    --color-secondary: #38bdf8;
+    --color-bg: #020617;
+    --color-surface: #0f172a;
+    --color-card: #111827;
+    --color-border: #1e293b;
+    --color-text: #e2e8f0;
+    --color-text-muted: #94a3b8;
+  }
+
+  body {
+    @apply bg-[#020617] text-[#e2e8f0] antialiased selection:bg-purple-500/30;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
   }
 }
 
-body {
-  background-color: var(--color-bg);
-  color: var(--color-text);
-  font-family: var(--font-body);
-}
+@layer utilities {
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
 
-h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-heading);
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-[#1e293b] rounded-full hover:bg-purple-500/50 transition-colors;
+  }
+
+  .glass-panel {
+    @apply bg-white/5 backdrop-blur-md border border-white/10;
+  }
+
+  .glow-primary {
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  }
+
+  .glow-secondary {
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.3);
+  }
+
+  .glow-card {
+    box-shadow: 0 0 15px rgba(139, 92, 246, 0.1);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+  }
 }

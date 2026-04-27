@@ -1,430 +1,651 @@
 import { useBuilderStore, SelectedComponent } from '../store/useBuilderStore';
-import { componentMap } from '../lib/componentMap';
+import { resolveComponentByKey } from '../lib/componentMap';
+import { componentsRegistry } from '../registry/componentsRegistry';
 import { useNavigate } from 'react-router-dom';
 import { 
   Trash2, GripVertical, Plus, Download, Eye, Smartphone, Tablet, Monitor, 
-  Settings, Layers, Save, Code, Share2, Palette, FileText, X, Rocket, CheckCircle2, SlidersHorizontal, Type, Box, Globe
+  Settings, Layers, Save, Code, Share2, Palette, FileText, X, Rocket, CheckCircle2, 
+  SlidersHorizontal, Type, Box, Globe, ChevronRight, Search, Layout as LayoutIcon,
+  MousePointer2, Sparkles, Wand2, ArrowLeft, History, Redo2, Undo2, ChevronDown, ChevronUp
 } from 'lucide-react';
 import { motion, Reorder, AnimatePresence } from 'framer-motion';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { collection, addDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import Frame from 'react-frame-component';
+import { Button, Input, SidebarItem } from '../components/ui/StandardUI';
+
+const CATEGORY_GROUPS = {
+  'Layout': ['navbar', 'hero', 'footer', 'cta'],
+  'Content': ['features', 'about', 'services', 'pricing', 'testimonials', 'faq', 'blog', 'gallery', 'stats'],
+  'Forms': ['contact']
+};
 
 export default function Builder() {
-  const { sections, order, removeComponent, moveComponent, clearComponents, setSections, updateSection, projectName, setProjectName } = useBuilderStore();
-  const selectedComponents = order.map(id => sections[id]).filter(c => c);
+  const { sections, order, addComponent, removeComponent, reorder, clearComponents, setSections, updateSection, projectName, setProjectName } = useBuilderStore();
   const navigate = useNavigate();
+
+  const [activeTab, setActiveTab] = useState<'library' | 'layers'>('library');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [device, setDevice] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
   const [isSaving, setIsSaving] = useState(false);
-  const [saveSuccess, setSaveSuccess] = useState(false);
-  const [selectedSection, setSelectedSection] = useState<SelectedComponent | null>(null);
+  const [showExport, setShowExport] = useState(false);
+  const [expandedCategories, setExpandedCategories] = useState<string[]>(['Layout', 'Content', 'Forms']);
+  const [exportStack, setExportStack] = useState<'react' | 'html' | 'next'>('react');
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportProgress, setExportProgress] = useState(0);
+  const [exportStage, setExportStage] = useState<'idle' | 'prepare' | 'images' | 'zip' | 'ready'>('idle');
+  const [exportMessage, setExportMessage] = useState('Preparing Files...');
+  const [previewMatch, setPreviewMatch] = useState<boolean | null>(null);
+  const [structuredDrafts, setStructuredDrafts] = useState<Record<string, string>>({});
+  const [structuredErrors, setStructuredErrors] = useState<Record<string, string>>({});
 
-  const [frameStyles, setFrameStyles] = useState<any[]>([]);
+  const selectedSection = selectedId ? sections[selectedId] : null;
 
-  useEffect(() => {
-    const getStyles = () => {
-      const styles = Array.from(document.querySelectorAll('style, link[rel="stylesheet"]')).map((el, i) => {
-        if (el.tagName === 'STYLE') return <style key={i} dangerouslySetInnerHTML={{ __html: el.innerHTML }} />;
-        if (el.tagName === 'LINK') return <link key={i} rel="stylesheet" href={(el as HTMLLinkElement).href} />;
-        return null;
+  const filteredRegistry = useMemo(() => {
+    if (!searchTerm) return componentsRegistry;
+    return componentsRegistry.filter(c => 
+      c.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      c.category.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [searchTerm]);
+
+  const toggleCategory = (cat: string) => {
+    setExpandedCategories(prev => 
+      prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
+    );
+  };
+
+  const handleAddComponent = (componentKey: string) => {
+    const comp = componentsRegistry.find(c => c.componentKey === componentKey);
+    const defaultProps = comp?.defaultSettings || {};
+    addComponent(componentKey, defaultProps);
+  };
+
+  const structuredFieldId = (sectionId: string, key: string) => `${sectionId}:${key}`;
+
+  const commitStructuredProp = (sectionId: string, key: string, rawValue: string) => {
+    const id = structuredFieldId(sectionId, key);
+    try {
+      const parsed = JSON.parse(rawValue);
+      updateSection(sectionId, { [key]: parsed });
+      setStructuredErrors(prev => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
       });
-      setFrameStyles(styles);
-    };
-    getStyles();
-    const observer = new MutationObserver(getStyles);
-    observer.observe(document.head, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, []);
-
-  const updateProp = (key: string, value: any) => {
-    if (!selectedSection) return;
-    updateSection(selectedSection.id, { [key]: value });
-    setSelectedSection(useBuilderStore.getState().sections[selectedSection.id]);
+    } catch {
+      setStructuredErrors(prev => ({ ...prev, [id]: 'Invalid JSON. Please fix syntax and try again.' }));
+    }
   };
 
-  const [showExportOptions, setShowExportOptions] = useState(false);
-
-  const handleExportReact = async () => {
-    const { downloadProjectZip } = await import('../utils/exportUtils');
-    await downloadProjectZip(selectedComponents, projectName);
-    setShowExportOptions(false);
-  };
-
-  const handleExportHTML = async () => {
-    const { generateStaticHTML } = await import('../utils/exportUtils');
-    const html = generateStaticHTML(selectedComponents, projectName);
-    const blob = new Blob([html], { type: 'text/html' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${projectName.toLowerCase().replace(/\s+/g, '_')}_static.html`;
-    link.click();
-    setShowExportOptions(false);
-  };
-
-  const handleExportJSON = () => {
-    const projectData = {
-      name: projectName || "Untitled Project",
-      exportedAt: new Date().toISOString(),
-      sections: selectedComponents.map(c => ({
-        id: c.id,
-        type: c.componentKey,
-        props: c.props
-      }))
-    };
-    const blob = new Blob([JSON.stringify(projectData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${(projectName || 'project').toLowerCase().replace(/\s+/g, '_')}_export.json`;
-    link.click();
-    setShowExportOptions(false);
-  };
-
-  const handleExport = () => {
-    if (!selectedComponents.length) return;
-    setShowExportOptions(true);
-  };
-
-  const handleSaveProject = async () => {
-    if (!selectedComponents.length) return;
+  const handleSave = async () => {
+    if (order.length === 0) return alert('Add some components before saving!');
     setIsSaving(true);
     try {
       const projectData = {
-        name: projectName || "Untitled Project",
-        createdAt: new Date(),
-        sections: selectedComponents.map(c => ({
-          id: c.id,
-          type: c.componentKey,
-          props: c.props
+        name: projectName,
+        sections: order.map(id => ({
+          id,
+          componentKey: sections[id].componentKey,
+          props: sections[id].props
         })),
-        componentKeys: selectedComponents.map(c => c.componentKey) // for preview thumbnails
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
       };
-
-      await addDoc(collection(db, "projects"), projectData);
-      
-      // Optional: Local Storage Backup
-      localStorage.setItem("project", JSON.stringify(projectData.sections));
-      
-      setSaveSuccess(true);
-      
-      // Keep successful state for 2 seconds
-      setTimeout(() => {
-        setSaveSuccess(false);
-      }, 2000);
+      await addDoc(collection(db, 'projects'), projectData);
+      alert('Project saved to cloud!');
     } catch (error) {
-      console.error("Error saving project:", error);
-      alert('Failed to save project. Ensure Firebase is configured.');
+      console.error('Error saving project:', error);
+      alert('Failed to save project.');
     } finally {
       setIsSaving(false);
     }
   };
 
+  const handleExport = async () => {
+    setIsExporting(true);
+    setExportProgress(0);
+    setExportStage('prepare');
+    setExportMessage('Preparing Files...');
+    setPreviewMatch(null);
+
+    try {
+      const { generateProjectZip } = await import('../lib/exportGenerators');
+      const frame = document.getElementById('builder-preview-frame') as HTMLIFrameElement | null;
+      const previewHtml = frame?.contentDocument?.body?.innerHTML || '';
+
+      const blob = await generateProjectZip(
+        { order, sections, projectName },
+        exportStack,
+        {
+          previewHtml,
+          projectName,
+          onProgress: (progress: any) => {
+            if (typeof progress.percent === 'number') setExportProgress(progress.percent);
+            if (typeof progress.message === 'string') setExportMessage(progress.message);
+            if (typeof progress.stage === 'string') setExportStage(progress.stage);
+            if (typeof progress.previewMatch === 'boolean') setPreviewMatch(progress.previewMatch);
+          }
+        }
+      );
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeName = (projectName || 'sitestudio-project').toLowerCase().replace(/[^\w\s-]/g, '').replace(/\s+/g, '-').replace(/-+/g, '-');
+      a.download = `${safeName}-${exportStack}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setExportProgress(100);
+      setExportStage('ready');
+      setExportMessage('Download Ready...');
+      alert('Project export completed! Check your downloads.');
+      setShowExport(false);
+    } catch (error) {
+      console.error('Export failed:', error);
+      alert('Failed to generate project zip.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
-    <div className="flex h-[calc(100vh-64px)] bg-[#09090b]">
-      {/* Sidebar - Component Order */}
-      <aside className="w-96 border-r border-white/5 bg-[#111111]/90 backdrop-blur-3xl overflow-hidden flex flex-col shadow-2xl z-20">
-        <div className="p-10 border-b border-white/5 bg-black/20">
-          <div className="flex items-center gap-4 mb-4">
-            <div className="p-3 bg-indigo-500/10 rounded-2xl border border-indigo-500/10 shadow-inner text-indigo-400">
-              <Layers size={20} />
+    <div className="h-screen flex flex-col bg-[#020617] text-[#e2e8f0] overflow-hidden">
+      {/* Top Navigation */}
+      <header className="h-14 border-b border-white/5 bg-[#0f172a]/80 backdrop-blur-md flex items-center justify-between px-4 z-50">
+        <div className="flex items-center gap-4">
+          <button onClick={() => navigate('/projects')} className="p-2 hover:bg-white/5 rounded-lg text-slate-400 hover:text-white transition-all">
+            <ArrowLeft size={18} />
+          </button>
+          <div className="h-6 w-px bg-white/10" />
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-purple-600 to-blue-600 flex items-center justify-center text-white shadow-[0_0_15px_rgba(139,92,246,0.3)]">
+              <Wand2 size={16} />
             </div>
-            <h2 className="font-black text-xs uppercase tracking-[0.3em] text-white/90">Page Structure</h2>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="relative group">
-              <div className="absolute left-4 top-1/2 -translate-y-1/2 text-indigo-400/30 group-focus-within:text-indigo-400 transition-colors">
-                <Type size={14} />
-              </div>
-              <input 
-                value={projectName}
-                onChange={(e) => setProjectName(e.target.value)}
-                className="w-full bg-[#09090b] border border-white/5 rounded-2xl pl-12 pr-4 py-4 text-white font-black text-[10px] uppercase tracking-widest focus:border-indigo-500/50 transition-all outline-none"
-                placeholder="ENTER PROJECT TITLE..."
-              />
-            </div>
-            
-            <div className="flex items-center justify-between px-2">
-              <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">Stack Integrity</span>
-              <span className="bg-indigo-500/10 text-[9px] font-black px-3 py-1 rounded-full text-indigo-400 border border-indigo-500/10 uppercase tracking-widest leading-none">
-                {selectedComponents.length} ELEMENTS
-              </span>
-            </div>
+            <input 
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              className="bg-transparent border-none focus:ring-0 font-bold text-sm text-white w-48 placeholder-slate-600"
+              placeholder="Untitled Project"
+            />
           </div>
         </div>
-        
-        <div className="flex-1 overflow-y-auto p-8 flex flex-col gap-6 custom-scrollbar">
-          {!selectedComponents.length ? (
-             <div className="text-center py-32 px-10 border-2 border-dashed border-white/5 rounded-[3rem] bg-white/[0.01]">
-               <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center text-white/5 mx-auto mb-8 border border-white/5">
-                 <Plus size={40} />
-               </div>
-               <p className="text-[10px] text-white/20 leading-relaxed font-black uppercase tracking-[0.3em] mb-8">Empty Canvas</p>
-               <button onClick={() => navigate('/components')} className="w-full py-5 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white rounded-[2rem] text-[10px] uppercase font-black transition-all tracking-[0.2em] border border-indigo-600/20 active:scale-95 shadow-2xl">Browse Library</button>
-             </div>
-          ) : (
-            <Reorder.Group axis="y" values={selectedComponents} onReorder={setSections} className="flex flex-col gap-4">
-              <AnimatePresence initial={false}>
-                {selectedComponents.map((item, index) => (
-                  <Reorder.Item 
-                    key={item.id} 
-                    value={item}
-                    initial={{ opacity: 0, x: -30 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, scale: 0.9, x: 30 }}
-                    className={`p-6 bg-[#18181b] hover:bg-[#1f1f23] border ${selectedSection?.id === item.id ? 'border-indigo-500' : 'border-white/5'} rounded-[2.5rem] cursor-grab active:cursor-grabbing flex items-center gap-5 group transition-all shadow-[0_20px_40px_-5px_rgba(0,0,0,0.4)]`}
-                    onClick={() => setSelectedSection(item)}
-                  >
-                    <div className="text-white/10 group-hover:text-indigo-400 transition-colors">
-                       <GripVertical size={18} />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[10px] font-black uppercase text-indigo-400/50 tracking-[0.3em] leading-none mb-2 line-clamp-1">
-                         {item.componentKey.split('-')[0]}
-                      </div>
-                      <div className="text-xs font-black text-white/70 line-clamp-1 uppercase tracking-tight leading-none">{item.componentKey.replace(/-/g, ' ')}</div>
-                    </div>
-                    <button onClick={() => removeComponent(item.id)} className="p-3 opacity-0 group-hover:opacity-100 text-white/10 hover:text-rose-500 transition-all rounded-xl hover:bg-rose-500/10 active:scale-90">
-                      <X size={18} strokeWidth={4} />
+
+        <div className="flex items-center gap-2 bg-[#020617] p-1 rounded-xl border border-white/5">
+          <button onClick={() => setDevice('desktop')} className={`p-1.5 rounded-lg transition-all ${device === 'desktop' ? 'bg-purple-600 text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]' : 'text-slate-500 hover:text-white'}`}>
+            <Monitor size={16} />
+          </button>
+          <button onClick={() => setDevice('tablet')} className={`p-1.5 rounded-lg transition-all ${device === 'tablet' ? 'bg-purple-600 text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]' : 'text-slate-500 hover:text-white'}`}>
+            <Tablet size={16} />
+          </button>
+          <button onClick={() => setDevice('mobile')} className={`p-1.5 rounded-lg transition-all ${device === 'mobile' ? 'bg-purple-600 text-white shadow-[0_0_10px_rgba(139,92,246,0.5)]' : 'text-slate-500 hover:text-white'}`}>
+            <Smartphone size={16} />
+          </button>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <Button variant="secondary" onClick={() => navigate('/live-preview')}>
+            <Eye size={16} /> Live Demo
+          </Button>
+          <Button variant="ghost" onClick={() => {
+            setExportProgress(0);
+            setExportStage('idle');
+            setExportMessage('Preparing Files...');
+            setPreviewMatch(null);
+            setShowExport(true);
+          }}>
+            <Download size={16} /> Export Project
+          </Button>
+          <Button variant="primary" onClick={handleSave} loading={isSaving}>
+            <Save size={16} /> {isSaving ? 'Processing...' : 'Deploy Architecture'}
+          </Button>
+        </div>
+      </header>
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar */}
+        <aside className="w-72 border-r border-white/5 bg-[#0f172a] flex flex-col z-40 relative">
+          <div className="p-4 flex gap-1 bg-[#020617]/30">
+            <button 
+              onClick={() => setActiveTab('library')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'library' ? 'bg-white/10 text-white shadow-inner' : 'text-slate-500 hover:text-white'}`}
+            >
+              <LayoutIcon size={14} /> Modules
+            </button>
+            <button 
+              onClick={() => setActiveTab('layers')}
+              className={`flex-1 flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'layers' ? 'bg-white/10 text-white shadow-inner' : 'text-slate-500 hover:text-white'}`}
+            >
+              <Layers size={14} /> Stack
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto custom-scrollbar">
+            {activeTab === 'library' ? (
+              <div className="p-4 space-y-6">
+                <div className="relative">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-600" />
+                  <input 
+                    placeholder="Search modules..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full bg-[#020617] border border-white/5 rounded-xl pl-9 pr-4 py-2.5 text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 font-medium"
+                  />
+                </div>
+
+                {Object.entries(CATEGORY_GROUPS).map(([group, cats]) => (
+                  <div key={group} className="space-y-2">
+                    <button 
+                      onClick={() => toggleCategory(group)}
+                      className="w-full flex items-center justify-between text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] px-1 py-2 hover:text-slate-400 transition-colors"
+                    >
+                      {group}
+                      {expandedCategories.includes(group) ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
                     </button>
-                  </Reorder.Item>
+                    
+                    <AnimatePresence>
+                      {expandedCategories.includes(group) && (
+                        <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="space-y-1.5 overflow-hidden">
+                          {filteredRegistry.filter(c => cats.includes(c.category)).map((comp) => (
+                            <motion.button 
+                              key={comp.componentKey}
+                              whileHover={{ x: 4 }}
+                              onClick={() => handleAddComponent(comp.componentKey)}
+                              className="w-full group flex items-center justify-between p-3 rounded-xl bg-[#020617]/50 border border-white/5 hover:border-purple-500/50 hover:bg-purple-600/5 transition-all text-left"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-[#0f172a] border border-white/5 flex items-center justify-center text-slate-500 group-hover:text-purple-400 group-hover:bg-[#020617] transition-all">
+                                  <LayoutIcon size={16} />
+                                </div>
+                                <div>
+                                  <div className="text-[11px] font-black text-white leading-none mb-1 group-hover:text-purple-300 transition-colors uppercase tracking-tight">{comp.name}</div>
+                                  <div className="text-[9px] text-slate-600 uppercase font-black tracking-widest">{comp.category}</div>
+                                </div>
+                              </div>
+                              <Plus size={14} className="text-slate-700 group-hover:text-purple-500 opacity-0 group-hover:opacity-100 transition-all" />
+                            </motion.button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 ))}
-              </AnimatePresence>
-            </Reorder.Group>
-          )}
-        </div>
-
-        <div className="p-8 border-t border-white/5 grid grid-cols-5 gap-4 bg-black/40">
-           <button onClick={handleSaveProject} disabled={isSaving || !selectedComponents.length} className="col-span-3 py-5 bg-indigo-600 hover:bg-indigo-500 text-white rounded-[2rem] text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 disabled:opacity-30 active:scale-95 shadow-2xl shadow-indigo-600/20">
-             {isSaving ? <div className="w-5 h-5 border-3 border-white/20 border-t-white rounded-full animate-spin" /> : saveSuccess ? <><CheckCircle2 size={20} strokeWidth={3} /> Saved</> : <><Save size={20} /> Save Project</>}
-           </button>
-           <button onClick={() => clearComponents()} disabled={!selectedComponents.length} className="col-span-2 py-5 bg-white/5 hover:bg-rose-600/10 text-white/20 hover:text-rose-400 rounded-[2rem] border border-white/5 text-[10px] font-black uppercase tracking-[0.2em] transition-all flex items-center justify-center gap-3 disabled:opacity-30 active:scale-95">
-             <Trash2 size={20} />
-           </button>
-        </div>
-      </aside>
-
-      {/* Main Preview Area */}
-      <main className="flex-1 flex flex-col relative overflow-hidden bg-[radial-gradient(circle_at_50%_0%,rgba(99,102,241,0.05),transparent)]">
-        {/* Top bar controls */}
-        <div className="h-24 border-b border-white/5 bg-[#09090b]/80 backdrop-blur-2xl flex items-center justify-between px-12 z-10 shadow-2xl">
-          <div className="flex items-center gap-3 p-2 bg-[#18181b] rounded-[1.75rem] border border-white/5 shadow-inner">
-            <button onClick={() => setDevice('desktop')} className={`p-4 rounded-xl transition-all shadow-2xl ${device === 'desktop' ? 'bg-indigo-600 text-white shadow-indigo-600/40' : 'text-white/10 hover:text-white/50 hover:bg-white/5'}`}>
-              <Monitor size={18} />
-            </button>
-            <button onClick={() => setDevice('tablet')} className={`p-4 rounded-xl transition-all shadow-2xl ${device === 'tablet' ? 'bg-indigo-600 text-white shadow-indigo-600/40' : 'text-white/10 hover:text-white/50 hover:bg-white/5'}`}>
-              <Tablet size={18} />
-            </button>
-            <button onClick={() => setDevice('mobile')} className={`p-4 rounded-xl transition-all shadow-2xl ${device === 'mobile' ? 'bg-indigo-600 text-white shadow-indigo-600/40' : 'text-white/10 hover:text-white/50 hover:bg-white/5'}`}>
-              <Smartphone size={18} />
-            </button>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <button onClick={() => navigate('/live-preview')} className="bg-[#18181b] hover:bg-[#1f1f23] text-white px-8 py-4.5 rounded-[1.75rem] text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-4 transition-all border border-white/5 shadow-2xl active:scale-95 group">
-              <Eye size={20} className="text-indigo-400 group-hover:scale-110 transition-transform" /> Live Demo
-            </button>
-            <button onClick={handleExport} className="bg-white text-[#09090b] px-10 py-4.5 rounded-[1.75rem] text-[10px] font-black uppercase tracking-[0.2em] flex items-center gap-4 transition-all shadow-[0_30px_60px_-15px_rgba(255,255,255,0.3)] active:scale-95 group">
-              <Download size={20} className="group-hover:-translate-y-1 transition-transform" /> Export Code
-            </button>
-          </div>
-        </div>
-
-        {/* Live Rendering Canvas */}
-        <div className="flex-1 overflow-y-auto p-20 custom-scrollbar flex flex-col items-center">
-          <div className={`bg-[#09090b] shadow-[0_80px_150px_-50px_rgba(0,0,0,1)] rounded-[4.5rem] overflow-hidden transition-all duration-1000 ease-[cubic-bezier(0.16,1,0.3,1)] border-[16px] border-[#18181b] ring-1 ring-white/5 ${device === 'desktop' ? 'w-full' : device === 'tablet' ? 'w-full max-w-4xl' : 'w-full max-w-md h-[850px] border-y-[100px]'}`}>
-            {!selectedComponents.length ? (
-              <div className="h-[700px] flex items-center justify-center bg-[radial-gradient(circle_at_50%_50%,rgba(99,102,241,0.03),transparent)] uppercase">
-                 <div className="text-center">
-                   <div className="w-32 h-32 bg-[#18181b] rounded-full flex items-center justify-center text-white/5 mx-auto mb-10 border border-white/5 shadow-inner">
-                     <Monitor size={64} className="opacity-10" />
-                   </div>
-                   <p className="text-white/20 text-[11px] font-black tracking-[0.5em] leading-none">Ready for Materialization</p>
-                 </div>
               </div>
             ) : (
-              device === 'desktop' ? (
-                selectedComponents.map((item) => {
-                  const Component = componentMap[item.componentKey];
-                  if (!Component) return <div key={item.id} className="p-32 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-[0.4em] border-y border-rose-500/10">Registry Fault: {item.componentKey}</div>;
-                  
-                  return (
-                    <div key={item.id} className="relative group/canvas">
-                      <Component {...item.props} />
-                      <div className="absolute inset-0 border-4 border-transparent group-hover/canvas:border-indigo-500/40 pointer-events-none transition-all z-10" />
-                      <div className="absolute top-10 right-10 flex gap-4 opacity-0 group-hover/canvas:opacity-100 transition-all z-20 translate-x-8 group-hover/canvas:translate-x-0">
-                        <button onClick={(e) => { e.stopPropagation(); removeComponent(item.id); if (selectedSection?.id === item.id) setSelectedSection(null); }} className="p-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(225,29,72,0.4)] transition-all active:scale-90"><Trash2 size={20}/></button>
-                        <button onClick={(e) => { e.stopPropagation(); setSelectedSection(item); }} className="p-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(79,70,229,0.4)] transition-all active:scale-90"><Settings size={20}/></button>
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <Frame head={<>{frameStyles}</>} style={{ width: '100%', height: '100%', minHeight: '600px', border: 'none', backgroundColor: '#09090b', display: 'block' }}>
-                  {selectedComponents.map((item) => {
-                    const Component = componentMap[item.componentKey];
-                    if (!Component) return <div key={item.id} className="p-32 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-[0.4em] border-y border-rose-500/10">Registry Fault: {item.componentKey}</div>;
-                    
-                    return (
-                      <div key={item.id} className="relative group/canvas">
-                        <Component {...item.props} />
-                        <div className="absolute inset-0 border-4 border-transparent group-hover/canvas:border-indigo-500/40 pointer-events-none transition-all z-10" />
-                        <div className="absolute top-10 right-10 flex gap-4 opacity-0 group-hover/canvas:opacity-100 transition-all z-20 translate-x-8 group-hover/canvas:translate-x-0">
-                          <button onClick={(e) => { e.stopPropagation(); removeComponent(item.id); if (selectedSection?.id === item.id) setSelectedSection(null); }} className="p-4 bg-rose-600 hover:bg-rose-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(225,29,72,0.4)] transition-all active:scale-90"><Trash2 size={20}/></button>
-                          <button onClick={(e) => { e.stopPropagation(); setSelectedSection(item); }} className="p-4 bg-indigo-600 hover:bg-indigo-500 text-white rounded-2xl shadow-[0_20px_40px_rgba(79,70,229,0.4)] transition-all active:scale-90"><Settings size={20}/></button>
+              <div className="p-4">
+                {order.length === 0 ? (
+                  <div className="text-center py-20 px-4 border-2 border-dashed border-white/5 rounded-2xl">
+                    <Layers size={32} className="mx-auto text-slate-700 mb-4 opacity-50" />
+                    <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest">Stack is empty</p>
+                  </div>
+                ) : (
+                  <Reorder.Group axis="y" values={order} onReorder={reorder} className="space-y-2">
+                    {order.map((id) => (
+                      <Reorder.Item 
+                        key={id} 
+                        value={id}
+                        className={`group flex items-center gap-3 p-3 rounded-xl border transition-all cursor-grab active:cursor-grabbing ${selectedId === id ? 'bg-purple-600/20 border-purple-500/50 shadow-[0_0_15px_rgba(139,92,246,0.2)]' : 'bg-[#020617]/50 border-white/5 hover:border-slate-700'}`}
+                        onClick={() => setSelectedId(id)}
+                      >
+                        <GripVertical size={14} className={selectedId === id ? 'text-purple-400' : 'text-slate-700'} />
+                        <div className="flex-1 min-w-0">
+                          <div className={`text-[11px] font-black uppercase tracking-tight truncate ${selectedId === id ? 'text-white' : 'text-slate-400'}`}>
+                            {sections[id].componentKey.split('-').join(' ')}
+                          </div>
                         </div>
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); removeComponent(id); if (selectedId === id) setSelectedId(null); }}
+                          className={`p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all ${selectedId === id ? 'hover:bg-white/10 text-white' : 'hover:bg-red-500/10 text-red-500'}`}
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      </Reorder.Item>
+                    ))}
+                  </Reorder.Group>
+                )}
+              </div>
+            )}
+          </div>
+        </aside>
+
+        {/* Center Canvas */}
+        <main className="flex-1 bg-[#020617] relative overflow-hidden flex flex-col">
+          <div className="flex-1 overflow-y-auto p-4 md:p-12 custom-scrollbar">
+            <div 
+              className={`mx-auto bg-white shadow-2xl transition-all duration-500 relative min-h-full overflow-hidden rounded-md ${
+                device === 'mobile' ? 'max-w-[375px]' : device === 'tablet' ? 'max-w-[768px]' : 'max-w-[1280px]'
+              }`}
+            >
+              <Frame
+                id="builder-preview-frame"
+                className="w-full h-full min-h-[calc(100vh-10rem)] block"
+                head={
+                  <>
+                    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet" />
+                    <style>{`
+                      body { margin: 0; padding: 0; overflow-x: hidden; font-family: 'Inter', system-ui, sans-serif; cursor: default; }
+                      * { box-sizing: border-box; }
+                      img, video, svg, canvas { max-width: 100%; height: auto; }
+                      .builder-section { position: relative; cursor: pointer; transition: all 0.2s; }
+                      .builder-section { width: 100%; max-width: 100%; overflow: hidden; }
+                      .builder-section > * { width: 100%; max-width: 100%; }
+                      .builder-section:hover { box-shadow: inset 0 0 0 2px rgba(139,92,246,0.3); }
+                      .builder-section.selected { box-shadow: inset 0 0 0 2px #8b5cf6; }
+                      .builder-section.selected::after { 
+                        content: 'SELECTED'; 
+                        position: absolute; 
+                        top: 10px; 
+                        right: 10px; 
+                        background: #8b5cf6; 
+                        color: white; 
+                        font-size: 8px; 
+                        font-weight: 900; 
+                        padding: 2px 6px; 
+                        border-radius: 4px; 
+                        letter-spacing: 1px;
+                        z-index: 50;
+                      }
+                    `}</style>
+                  </>
+                }
+              >
+                <div className="flex flex-col">
+                  {order.map((id) => {
+                    const section = sections[id];
+                    if (!section) return null;
+                    const Component = resolveComponentByKey(section.componentKey);
+                    if (!Component) return null;
+                    return (
+                      <div 
+                        key={id} 
+                        className={`builder-section ${selectedId === id ? 'selected' : ''}`}
+                        onClick={() => setSelectedId(id)}
+                      >
+                        <Component {...section.props} />
                       </div>
                     );
                   })}
-                </Frame>
-              )
-            )}
+                  {order.length === 0 && (
+                    <div className="flex flex-col items-center justify-center min-h-[600px] text-slate-300">
+                      <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center text-slate-200 mb-6 shadow-inner border border-slate-100">
+                        <Plus size={40} />
+                      </div>
+                      <h2 className="text-2xl font-black text-slate-800 mb-2">Architect Your Vision</h2>
+                      <p className="text-slate-400 max-w-sm text-center text-sm">Select architectural modules from the left library to begin construction.</p>
+                    </div>
+                  )}
+                </div>
+              </Frame>
+            </div>
           </div>
-        </div>
-      </main>
+        </main>
 
-      {/* Right Customization Sidebar */}
-      <AnimatePresence>
-        {selectedSection && (
-          <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: 350, opacity: 1 }} exit={{ width: 0, opacity: 0 }}
-            className="border-l border-white/5 bg-[#111113] overflow-y-auto shrink-0 flex flex-col z-30 shadow-2xl relative">
-            <div className="p-6 border-b border-white/5 sticky top-0 bg-[#111113]/90 backdrop-blur z-10 flex justify-between items-center">
-              <div>
-                <h3 className="text-white font-bold text-lg flex items-center gap-2"><SlidersHorizontal size={18} className="text-indigo-400"/> Customize Object</h3>
-                <p className="text-[10px] text-white/40 mt-1 uppercase font-black tracking-widest">{selectedSection.componentKey}</p>
-              </div>
-              <button onClick={() => setSelectedSection(null)} className="p-2 bg-white/5 hover:bg-white/10 rounded-full text-white/50"><X size={16}/></button>
-            </div>
-
-            <div className="p-6 space-y-10 pb-32">
-              {/* COLORS */}
-              <div className="space-y-6">
-                <h4 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] flex items-center gap-2"><Palette size={14}/> Appearance</h4>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-[10px] font-black uppercase text-white/20 mb-2 block">Background</label>
-                    <div className="flex gap-2">
-                       <input type="color" value={selectedSection.props.bgColor || "#09090b"} onChange={(e) => updateProp('bgColor', e.target.value)} className="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0" />
-                       <input type="text" value={selectedSection.props.bgColor || ""} onChange={(e) => updateProp('bgColor', e.target.value)} className="flex-1 bg-[#09090b] border border-white/10 rounded-lg px-2 text-[10px] text-white font-mono uppercase" />
-                    </div>
+        {/* Right Panel */}
+        <aside className={`w-80 border-l border-white/5 bg-[#0f172a] flex flex-col transition-all duration-300 z-40 ${!selectedId ? 'translate-x-full opacity-0 absolute right-0' : 'relative opacity-100'}`}>
+          {selectedSection ? (
+            <div className="flex flex-col h-full">
+              <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#020617]/30">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                    <Settings size={16} />
                   </div>
                   <div>
-                    <label className="text-[10px] font-black uppercase text-white/20 mb-2 block">Text Color</label>
-                    <div className="flex gap-2">
-                       <input type="color" value={selectedSection.props.textColor || "#ffffff"} onChange={(e) => updateProp('textColor', e.target.value)} className="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0" />
-                       <input type="text" value={selectedSection.props.textColor || ""} onChange={(e) => updateProp('textColor', e.target.value)} className="flex-1 bg-[#09090b] border border-white/10 rounded-lg px-2 text-[10px] text-white font-mono uppercase" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase text-white/20 mb-2 block">Accent</label>
-                    <div className="flex gap-2">
-                       <input type="color" value={selectedSection.props.accentColor || "#6366f1"} onChange={(e) => updateProp('accentColor', e.target.value)} className="w-10 h-10 rounded-lg cursor-pointer bg-transparent border-0" />
-                       <input type="text" value={selectedSection.props.accentColor || ""} onChange={(e) => updateProp('accentColor', e.target.value)} className="flex-1 bg-[#09090b] border border-white/10 rounded-lg px-2 text-[10px] text-white font-mono uppercase" />
-                    </div>
+                    <div className="text-[11px] font-black text-white leading-none mb-1 uppercase tracking-tight">Configuration</div>
+                    <div className="text-[9px] text-slate-600 font-black uppercase tracking-widest">{selectedSection.componentKey}</div>
                   </div>
                 </div>
+                <button onClick={() => setSelectedId(null)} className="p-1.5 hover:bg-white/5 rounded-lg text-slate-600 hover:text-white transition-all">
+                  <X size={16} />
+                </button>
               </div>
 
-              {/* CONTENT */}
-              <div className="space-y-6 pt-6 border-t border-white/5">
-                <h4 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] flex items-center gap-2"><Type size={14}/> Text Content</h4>
+              <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
+                {/* Visual Settings Section */}
                 <div className="space-y-4">
-                  <div>
-                    <label className="text-[10px] font-black uppercase text-white/20 mb-2 block">Section Title</label>
-                    <input type="text" value={selectedSection.props.title || ""} onChange={(e) => updateProp('title', e.target.value)} className="w-full bg-[#09090b] border border-white/10 rounded-xl px-3 py-2.5 text-sm text-white" />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-black uppercase text-white/20 mb-2 block">Description</label>
-                    <textarea value={selectedSection.props.description || selectedSection.props.desc || ""} onChange={(e) => { updateProp('description', e.target.value); updateProp('desc', e.target.value); }} className="w-full bg-[#09090b] border border-white/10 rounded-xl p-3 text-sm text-white min-h-[80px]" />
+                  <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <Palette size={12} /> Design
+                  </h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Text</label>
+                      <input 
+                        type="color" 
+                        value={selectedSection.props.textColor || '#000000'}
+                        onChange={(e) => updateSection(selectedId!, { textColor: e.target.value })}
+                        className="w-full h-10 rounded-xl bg-[#020617] border border-white/5 cursor-pointer p-1"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">Back</label>
+                      <input 
+                        type="color" 
+                        value={selectedSection.props.bgColor || '#ffffff'}
+                        onChange={(e) => updateSection(selectedId!, { bgColor: e.target.value })}
+                        className="w-full h-10 rounded-xl bg-[#020617] border border-white/5 cursor-pointer p-1"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-              
-              {/* CONFIGURATION */}
-              <div className="space-y-6 pt-6 border-t border-white/5">
-                <h4 className="text-[10px] font-black text-white/30 uppercase tracking-[0.2em] flex items-center gap-2"><Box size={14}/> Config / Layout</h4>
-                <div className="flex items-center justify-between">
-                   <label className="text-xs font-bold text-white/60">Hover Animations</label>
-                   <button onClick={() => updateProp('hoverEffect', !selectedSection.props.hoverEffect)} className={`w-12 h-6 rounded-full transition-colors relative ${selectedSection.props.hoverEffect !== false ? 'bg-indigo-600' : 'bg-white/10'}`}>
-                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${selectedSection.props.hoverEffect !== false ? 'left-7' : 'left-1'}`} />
-                   </button>
+
+                {/* Content Settings Section */}
+                <div className="space-y-4 pt-6 border-t border-white/5">
+                  <h4 className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] flex items-center gap-2">
+                    <FileText size={12} /> Content
+                  </h4>
+                  
+                  {Object.entries(selectedSection.props).map(([key, value]) => {
+                    if (key === 'textColor' || key === 'bgColor' || key === 'id') return null;
+                    const fieldId = structuredFieldId(selectedId!, key);
+                    const isStructured = Array.isArray(value) || (typeof value === 'object' && value !== null);
+                    const structuredValue = structuredDrafts[fieldId] ?? (isStructured ? JSON.stringify(value, null, 2) : '');
+
+                    return (
+                      <div key={key} className="space-y-1.5">
+                        <label className="text-[10px] font-black text-slate-500 uppercase tracking-widest px-1">{key.replace(/([A-Z])/g, ' $1').trim()}</label>
+                        {typeof value === 'boolean' ? (
+                          <button 
+                            onClick={() => updateSection(selectedId!, { [key]: !value })}
+                            className={`w-full flex items-center justify-between p-3 rounded-xl border transition-all ${value ? 'bg-purple-600/10 border-purple-500/50 text-purple-400' : 'bg-[#020617] border-white/5 text-slate-600'}`}
+                          >
+                            <span className="text-[10px] font-black">{value ? 'ENABLED' : 'DISABLED'}</span>
+                            <div className={`w-4 h-4 rounded-full transition-all ${value ? 'bg-purple-500 translate-x-0' : 'bg-slate-800 shadow-inner'}`} />
+                          </button>
+                        ) : typeof value === 'number' ? (
+                          <input
+                            type="number"
+                            value={Number.isFinite(value as number) ? value : 0}
+                            onChange={(e) => {
+                              const parsed = Number(e.target.value);
+                              updateSection(selectedId!, { [key]: Number.isFinite(parsed) ? parsed : 0 });
+                            }}
+                            className="w-full bg-[#020617] border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 font-medium"
+                          />
+                        ) : isStructured ? (
+                          <>
+                            <textarea
+                              value={structuredValue}
+                              onFocus={() => {
+                                setStructuredDrafts(prev => ({
+                                  ...prev,
+                                  [fieldId]: prev[fieldId] ?? JSON.stringify(value, null, 2)
+                                }));
+                              }}
+                              onChange={(e) => {
+                                const nextValue = e.target.value;
+                                setStructuredDrafts(prev => ({ ...prev, [fieldId]: nextValue }));
+                                setStructuredErrors(prev => {
+                                  const next = { ...prev };
+                                  delete next[fieldId];
+                                  return next;
+                                });
+                              }}
+                              onBlur={() => commitStructuredProp(selectedId!, key, structuredValue)}
+                              rows={6}
+                              className={`w-full bg-[#020617] border rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 resize-none custom-scrollbar font-mono ${structuredErrors[fieldId] ? 'border-red-500/70 focus:ring-red-500/30' : 'border-white/5 focus:ring-purple-500/30'}`}
+                            />
+                            <p className={`text-[10px] font-bold px-1 ${structuredErrors[fieldId] ? 'text-red-400' : 'text-slate-500'}`}>
+                              {structuredErrors[fieldId] || 'JSON field: edit carefully and click outside to apply.'}
+                            </p>
+                          </>
+                        ) : (
+                          <textarea 
+                            value={String(value ?? '')}
+                            onChange={(e) => updateSection(selectedId!, { [key]: e.target.value })}
+                            rows={3}
+                            className="w-full bg-[#020617] border border-white/5 rounded-xl px-4 py-3 text-xs text-white focus:outline-none focus:ring-2 focus:ring-purple-500/30 resize-none custom-scrollbar font-medium"
+                          />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
-                <div className="flex items-center justify-between">
-                   <label className="text-xs font-bold text-white/60">Animations</label>
-                   <button onClick={() => updateProp('animation', !selectedSection.props.animation)} className={`w-12 h-6 rounded-full transition-colors relative ${selectedSection.props.animation !== false ? 'bg-indigo-600' : 'bg-white/10'}`}>
-                      <div className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${selectedSection.props.animation !== false ? 'left-7' : 'left-1'}`} />
-                   </button>
+
+                {/* Advanced Actions */}
+                <div className="pt-6">
+                  <Button variant="danger" onClick={() => { removeComponent(selectedId!); setSelectedId(null); }} className="w-full h-12">
+                    <Trash2 size={16} /> Delete Module
+                  </Button>
                 </div>
               </div>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-600 space-y-4">
+              <div className="w-16 h-16 rounded-3xl bg-[#020617] flex items-center justify-center border border-white/5 shadow-inner">
+                <MousePointer2 size={24} className="opacity-50" />
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-widest leading-relaxed opacity-50">Select a module on the canvas to configure parameters.</p>
+            </div>
+          )}
+        </aside>
+      </div>
 
-      {/* Export Options Modal */}
+      {/* Export Modal */}
       <AnimatePresence>
-        {showExportOptions && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-8 md:p-12" onClick={() => setShowExportOptions(false)}>
-            <motion.div initial={{ scale: 0.9, y: 50 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.9, y: 50 }} onClick={e => e.stopPropagation()} className="bg-[#09090b] border border-white/10 rounded-[3rem] w-full max-w-4xl p-12 md:p-16 shadow-[0_80px_150px_-40px_rgba(0,0,0,1)] relative overflow-hidden ring-1 ring-white/5">
-               <div className="absolute top-8 right-8">
-                 <button onClick={() => setShowExportOptions(false)} className="bg-white/5 hover:bg-rose-500/10 p-4 rounded-2xl text-white/20 hover:text-rose-500 transition-all active:scale-90 border border-white/5 shadow-xl"><X size={24} strokeWidth={3} /></button>
-               </div>
-               
-               <div className="mb-12">
-                  <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400 mb-8 shadow-inner border border-indigo-500/10">
-                    <Download size={32} />
+        {showExport && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowExport(false)} className="absolute inset-0 bg-black/90 backdrop-blur-sm" />
+            <motion.div initial={{ scale: 0.95, opacity: 0, y: 20 }} animate={{ scale: 1, opacity: 1, y: 0 }} exit={{ scale: 0.95, opacity: 0, y: 20 }} className="relative w-full max-w-3xl bg-[#0f172a] border border-white/10 rounded-[3rem] shadow-2xl flex flex-col max-h-[85vh] overflow-hidden">
+              <div className="p-8 border-b border-white/10 flex items-center justify-between bg-[#020617]/50">
+                <div className="flex items-center gap-4">
+                  <div className="p-4 bg-purple-500/10 rounded-[2rem] text-purple-400 border border-purple-500/20">
+                    <Rocket size={32} />
                   </div>
-                  <h2 className="text-4xl font-black text-white mb-4 uppercase tracking-tighter">Generate Stack</h2>
-                  <p className="text-white/30 text-lg leading-relaxed font-medium uppercase tracking-widest text-xs">Transform your canvas into a production-ready infrastructure.</p>
-               </div>
-               
-               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* React Export */}
-                  <button onClick={handleExportReact} className="p-8 bg-[#18181b] border border-white/5 rounded-[2rem] flex flex-col items-center text-center gap-6 group hover:bg-indigo-600/10 hover:border-indigo-500/30 transition-all active:scale-[0.98] shadow-2xl relative">
-                    <div className="p-5 bg-black rounded-2xl text-indigo-400 group-hover:shadow-[0_0_30px_rgba(99,102,241,0.2)] transition-all border border-white/5">
-                      <Rocket size={32} />
-                    </div>
-                    <div>
-                        <div className="text-lg font-black text-white mb-2 uppercase tracking-tight">React Project</div>
-                        <div className="text-[9px] uppercase font-black tracking-[0.2em] text-white/20 group-hover:text-indigo-400/50 transition-colors">FULL ZIP • VITE • TAILWIND</div>
-                    </div>
-                    <div className="absolute top-4 right-4 bg-indigo-500/20 text-indigo-400 text-[8px] font-black px-3 py-1 rounded-full border border-indigo-500/20 uppercase tracking-widest leading-none">Recommended</div>
-                  </button>
-
-                  {/* HTML Export */}
-                  <button onClick={handleExportHTML} className="p-8 bg-[#18181b] border border-white/5 rounded-[2rem] flex flex-col items-center text-center gap-6 group hover:bg-[#1f1f23] hover:border-white/10 transition-all active:scale-[0.98] shadow-2xl">
-                    <div className="p-5 bg-black rounded-2xl text-white/20 group-hover:text-white transition-all border border-white/5">
-                      <Globe size={32} />
-                    </div>
-                    <div>
-                        <div className="text-lg font-black text-white mb-2 uppercase tracking-tight">Static HTML</div>
-                        <div className="text-[9px] uppercase font-black tracking-[0.2em] text-white/20 transition-colors">SINGLE FILE • CDN ASSETS</div>
-                    </div>
-                  </button>
-
-                  {/* JSON Export */}
-                  <button onClick={handleExportJSON} className="p-8 bg-[#18181b] border border-white/5 rounded-[2rem] flex flex-col items-center text-center gap-6 group hover:bg-[#1f1f23] hover:border-white/10 transition-all active:scale-[0.98] shadow-2xl">
-                    <div className="p-5 bg-black rounded-2xl text-white/20 group-hover:text-white transition-all border border-white/5">
-                      <Code size={32} />
-                    </div>
-                    <div>
-                        <div className="text-lg font-black text-white mb-2 uppercase tracking-tight">Data Package</div>
-                        <div className="text-[9px] uppercase font-black tracking-[0.2em] text-white/20 transition-colors">JSON SCHEMA • PORTABLE</div>
-                    </div>
-                  </button>
-               </div>
-               
-               <div className="mt-12 p-6 bg-indigo-500/5 border border-indigo-500/10 rounded-2xl flex items-center justify-between">
-                  <div className="flex items-center gap-4 text-indigo-400">
-                    <div className="p-2 bg-indigo-500/10 rounded-lg"><CheckCircle2 size={16}/></div>
-                    <span className="text-[10px] font-black uppercase tracking-[0.2em]">Ready for Materialization</span>
+                  <div>
+                    <h2 className="text-2xl font-black text-white uppercase tracking-tight">Export Architecture</h2>
+                    <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-none">Select your production tech stack</p>
                   </div>
-                  <span className="text-white/20 text-[10px] font-black uppercase tracking-widest">{selectedComponents.length} ELEMENTS SERIALIZED</span>
-               </div>
+                </div>
+                <button onClick={() => setShowExport(false)} className="p-2 hover:bg-white/5 rounded-xl text-slate-600 hover:text-white transition-all"><X size={28} /></button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-10 space-y-10 bg-[#020617]/50 custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {[
+                    { id: 'react', name: 'React', desc: 'Production-ready Vite React project', icon: <Rocket size={24}/>, color: 'from-blue-500 to-cyan-500' },
+                    { id: 'html', name: 'HTML/CSS/JS', desc: 'Static export with bundled assets', icon: <Code size={24}/>, color: 'from-orange-500 to-red-500' },
+                    { id: 'next', name: 'Next.js', desc: 'Next.js App Router project export', icon: <Globe size={24}/>, color: 'from-slate-500 to-black' }
+                  ].map((stack) => (
+                    <button 
+                      key={stack.id}
+                      disabled={isExporting}
+                      onClick={() => setExportStack(stack.id as any)}
+                      className={`relative group p-6 rounded-[2.5rem] border transition-all text-left flex flex-col gap-4 disabled:opacity-50 disabled:cursor-not-allowed ${exportStack === stack.id ? 'bg-white/5 border-purple-500 shadow-[0_0_30px_rgba(139,92,246,0.2)]' : 'bg-[#0f172a] border-white/5 hover:border-slate-700'}`}
+                    >
+                      <div className={`w-12 h-12 rounded-2xl bg-gradient-to-br ${stack.color} flex items-center justify-center text-white shadow-xl`}>
+                        {stack.icon}
+                      </div>
+                      <div>
+                        <div className="text-sm font-black text-white uppercase tracking-tight mb-1">{stack.name}</div>
+                        <div className="text-[10px] text-slate-500 font-black uppercase tracking-widest leading-tight">{stack.desc}</div>
+                      </div>
+                      {exportStack === stack.id && (
+                        <div className="absolute top-4 right-4 text-purple-500">
+                          <CheckCircle2 size={24} />
+                        </div>
+                      )}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="p-8 rounded-[2.5rem] bg-[#020617] border border-white/5 space-y-6">
+                  <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2"><Sparkles size={14}/> Production Configuration</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4 text-xs font-black text-slate-400">
+                        <div className="w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500"><CheckCircle2 size={14}/></div>
+                        Tailwind CSS Integrated
+                      </div>
+                      <div className="flex items-center gap-4 text-xs font-black text-slate-400">
+                        <div className="w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500"><CheckCircle2 size={14}/></div>
+                        Framer Motion Animations
+                      </div>
+                    </div>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-4 text-xs font-black text-slate-400">
+                        <div className="w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500"><CheckCircle2 size={14}/></div>
+                        Fully Responsive Output
+                      </div>
+                      <div className="flex items-center gap-4 text-xs font-black text-slate-400">
+                        <div className="w-6 h-6 rounded-lg bg-green-500/10 flex items-center justify-center text-green-500"><CheckCircle2 size={14}/></div>
+                        Optimized Asset Pipeline
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {(isExporting || exportStage !== 'idle' || exportProgress > 0) && (
+                  <div className="p-8 rounded-[2.5rem] bg-[#020617] border border-white/5 space-y-5">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] flex items-center gap-2">
+                        <Download size={14} /> Export Progress
+                      </h3>
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{Math.min(100, Math.max(0, Math.round(exportProgress)))}%</span>
+                    </div>
+                    <div className="w-full h-2 rounded-full bg-white/5 overflow-hidden">
+                      <div className="h-full rounded-full bg-gradient-to-r from-purple-500 to-cyan-500 transition-all duration-300" style={{ width: `${Math.min(100, Math.max(0, exportProgress))}%` }} />
+                    </div>
+                    <p className="text-xs text-slate-300 font-semibold">{exportMessage}</p>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {[
+                        { id: 'prepare', label: 'Preparing Files...' },
+                        { id: 'images', label: 'Optimizing Images...' },
+                        { id: 'zip', label: 'Creating ZIP...' },
+                        { id: 'ready', label: 'Download Ready...' }
+                      ].map((step, index) => {
+                        const stageOrder = { idle: -1, prepare: 0, images: 1, zip: 2, ready: 3 };
+                        const current = stageOrder[exportStage];
+                        const completed = current > index;
+                        const active = current === index;
+                        return (
+                          <div key={step.id} className={`rounded-xl border px-4 py-3 text-[10px] font-black uppercase tracking-widest transition-all ${completed ? 'border-green-500/30 bg-green-500/10 text-green-400' : active ? 'border-purple-500/30 bg-purple-500/10 text-purple-300' : 'border-white/5 bg-white/[0.02] text-slate-600'}`}>
+                            {completed ? 'Done • ' : active ? 'Now • ' : ''}{step.label}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {previewMatch !== null && (
+                      <div className={`text-[10px] font-black uppercase tracking-widest ${previewMatch ? 'text-emerald-400' : 'text-amber-400'}`}>
+                        Preview Match Check: {previewMatch ? 'Matched' : 'Auto-Fixed Before Export'}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="p-10 border-t border-white/10 flex justify-end gap-4 bg-[#020617]/80">
+                <Button variant="secondary" onClick={() => setShowExport(false)} className="px-10 h-14 rounded-2xl font-black text-xs uppercase tracking-widest" disabled={isExporting}>Cancel</Button>
+                <Button variant="primary" onClick={handleExport} loading={isExporting} className="px-12 h-14 rounded-2xl font-black text-xs uppercase tracking-widest">
+                  <Download size={20} /> {isExporting ? exportMessage : 'Download Project ZIP'}
+                </Button>
+              </div>
             </motion.div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </div>

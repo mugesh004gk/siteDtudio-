@@ -1,4 +1,18 @@
-import { RegistryItem } from './componentsRegistry';
+export interface RegistryItem {
+  name: string;
+  category: string;
+  type: string;
+  componentKey: string;
+  slug: string;
+  description: string;
+  tags: string[];
+  previewImage: string;
+  features: string[];
+  defaultSettings: Record<string, any>;
+  codeTemplate: string;
+  isPremium: boolean;
+  createdAt: string;
+}
 
 const img = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=600&q=80`;
 const I = {

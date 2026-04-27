@@ -35,7 +35,7 @@ export const CtaFullWidth = ({ bgColor, btnColor, isPreview }: any) => (
               <div className="w-10 h-10 rounded-full bg-indigo-500 flex items-center justify-center text-white"><Sparkles size={20}/></div>
               <span className="text-[10px] font-black uppercase text-white tracking-[0.5em]">SYSTEM ACCESS GRANTED</span>
           </div>
-          <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter leading-[0.8] mb-4 uppercase">BUILD YOUR <br/><span className="text-white/20 italic italic">VISION.</span></h2>
+          <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter leading-[0.8] mb-4 uppercase">BUILD YOUR <br/><span className="text-white/20 italic">VISION.</span></h2>
        </div>
        <button style={{ color: bgColor === '#ffffff' ? '#000' : bgColor, backgroundColor: btnColor }} className="px-16 py-8 rounded-[2.5rem] font-black text-xl uppercase tracking-tighter hover:scale-110 active:scale-95 transition-all shadow-[0_20px_80px_rgba(255,255,255,0.1)] flex items-center gap-4">
           Activate Node <Zap size={24} fill="currentColor" />
@@ -49,7 +49,7 @@ export const CtaSplit = ({ bgColor, accentColor, isPreview }: any) => (
     <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
        <div className="p-12 md:p-20 bg-indigo-600 rounded-[4rem] relative overflow-hidden shadow-2xl group border border-white/10">
           <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-[100px]" />
-          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-none mb-6 italic italic group-hover:translate-x-4 transition-transform duration-500">START <br/>SHIPPING.</h2>
+          <h2 className="text-4xl md:text-6xl font-black text-white tracking-tighter uppercase leading-none mb-6 italic group-hover:translate-x-4 transition-transform duration-500">START <br/>SHIPPING.</h2>
           <p className="text-white/60 mb-10 text-lg leading-relaxed max-w-sm">Direct export to Next.js, Vite, or Raw HTML/Tailwind. No compromises.</p>
           <div className="flex gap-4">
              <button className="bg-white text-black p-4 rounded-2xl hover:scale-110 transition"><Rocket size={24}/></button>
@@ -95,8 +95,8 @@ export const CtaWithForm = ({ bgColor, btnColor, isPreview }: any) => (
        </div>
        <div className="w-full lg:w-[500px] relative z-10">
           <form onSubmit={(e) => e.preventDefault()} className="flex flex-col sm:flex-row gap-4">
-             <input type="email" placeholder="professional@email.com" className="flex-1 h-18 bg-white/10 border border-white/20 rounded-2xl px-6 text-white text-sm outline-none focus:bg-white/20 transition shadow-2xl" />
-             <button style={{ color: bgColor === '#ffffff' ? '#000' : bgColor, backgroundColor: btnColor || '#fff' }} className="h-18 px-10 bg-white rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition shadow-2xl shadow-black/10">JOIN NOW</button>
+             <input type="email" placeholder="professional@email.com" className="flex-1 h-16 bg-white/10 border border-white/20 rounded-2xl px-6 text-white text-sm outline-none focus:bg-white/20 transition shadow-2xl" />
+             <button style={{ color: bgColor === '#ffffff' ? '#000' : bgColor, backgroundColor: btnColor || '#fff' }} className="h-16 px-10 bg-white rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition shadow-2xl shadow-black/10">JOIN NOW</button>
           </form>
           <div className="mt-6 flex items-center gap-4 text-white/40 text-[10px] font-black uppercase tracking-widest px-4">
              <div className="flex -space-x-2">
@@ -111,7 +111,7 @@ export const CtaWithForm = ({ bgColor, btnColor, isPreview }: any) => (
 
 export const CtaImageBackground = ({ bgColor, isPreview }: any) => (
   <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-40'} px-6 overflow-hidden relative flex flex-col items-center justify-center text-center`}>
-      <img src="https://images.unsplash.com/photo-1542641728-6ca359b085f4?q=80&w=1500" className="absolute inset-0 w-full h-full object-cover opacity-40grayscale group-hover:scale-110 transition-transform duration-[10s]" alt="cta" />
+      <img src="https://images.unsplash.com/photo-1542641728-6ca359b085f4?q=80&w=1500" className="absolute inset-0 w-full h-full object-cover grayscale opacity-40 group-hover:scale-110 transition-transform duration-[10s]" alt="cta" />
       <div className="absolute inset-0 bg-black/60" />
       <div className="relative z-10 max-w-4xl mx-auto shadow-2xl shadow-black">
          <motion.div initial={{ y: 50, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} className="flex justify-center mb-10 text-white/50"><Rocket size={50}/></motion.div>
@@ -129,7 +129,7 @@ export const CtaVideoBackground = ({ bgColor, isPreview }: any) => (
          <div className="w-24 h-24 rounded-full border-2 border-white/10 flex items-center justify-center text-white mx-auto mb-12 hover:scale-110 transition group cursor-pointer">
             <div className="w-16 h-16 rounded-full bg-white text-black flex items-center justify-center shadow-2xl group-hover:shadow-white/20"><Play size={28} fill="currentColor" /></div>
          </div>
-         <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter uppercase mb-8 italic italic scale-x-110">EXPERIENCE <br/>THE ENGINE.</h2>
+         <h2 className="text-5xl md:text-8xl font-black text-white tracking-tighter uppercase mb-8 italic scale-x-110">EXPERIENCE <br/>THE ENGINE.</h2>
          <button className="bg-white text-black px-12 py-6 rounded-2xl font-black uppercase text-xs tracking-widest hover:scale-105 active:scale-95 transition shadow-2xl">WATCH DEMO VIDEO</button>
       </div>
   </section>
@@ -165,7 +165,7 @@ export const CtaInteractive = ({ bgColor, accentColor, isPreview }: any) => (
        <div className="absolute top-0 left-0 w-80 h-80 bg-white/10 rounded-full blur-[100px] -ml-40 -mt-40 group-hover:scale-150 transition-transform duration-[2s]" />
        <div className="absolute bottom-0 right-0 w-80 h-80 bg-black/20 rounded-full blur-[100px] -mr-40 -mb-40" />
        
-       <h2 className="text-6xl md:text-9xl font-black text-white tracking-[1.5em] md:tracking-[2em] translate-x-[0.5em] md:translate-x-[1em] mb-12 uppercase leading-none italic italic">INTERACTIVE</h2>
+       <h2 className="text-6xl md:text-9xl font-black text-white tracking-[1.5em] md:tracking-[2em] translate-x-[0.5em] md:translate-x-[1em] mb-12 uppercase leading-none italic">INTERACTIVE</h2>
        <div className="w-32 h-32 rounded-full bg-white text-black flex items-center justify-center shadow-2xl group-hover:scale-125 transition-all text-xs font-black uppercase tracking-widest">SEND NOW</div>
        <div className="mt-12 text-white/20 text-[10px] font-black uppercase tracking-[1em]">SYSTEM UNDER LOAD</div>
     </motion.div>
@@ -217,7 +217,7 @@ export const CtaCreative3D = ({ bgColor, accentColor, isPreview }: any) => (
               <h2 className="text-5xl md:text-8xl font-black text-white leading-[0.8] tracking-tighter uppercase mb-20 group-hover:text-indigo-400 transition-all duration-500">JOIN THE <br/>FUTURE.</h2>
               <div className="flex items-center gap-10 relative z-10">
                  <button style={{ backgroundColor: accentColor }} className="px-10 py-5 rounded-2xl text-black font-black uppercase text-xs tracking-widest shadow-2xl shadow-indigo-500/20 group-hover:scale-110 transition-transform flex items-center gap-3">Activate <ArrowRight size={18}/></button>
-                 <span className="text-[10px] font-black uppercase text-white/10 tracking-[0.2em] italic italic">NEON SIGNATURE ENGINE V.2</span>
+                 <span className="text-[10px] font-black uppercase text-white/10 tracking-[0.2em] italic">NEON SIGNATURE ENGINE V.2</span>
               </div>
            </div>
         </motion.div>

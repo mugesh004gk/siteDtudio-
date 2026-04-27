@@ -18,11 +18,14 @@ const BuilderContext = createContext<BuilderContextType | undefined>(undefined);
 
 export const BuilderProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const store = useBuilderStore();
+  const selectedComponents = store.order
+    .map(id => store.sections[id])
+    .filter((section): section is SelectedComponent => Boolean(section));
   
   const value: BuilderContextType = {
     projectName: store.projectName,
     setProjectName: store.setProjectName,
-    selectedComponents: store.order.map(id => store.sections[id]),
+    selectedComponents,
     addComponent: store.addComponent,
     removeComponent: store.removeComponent,
     moveComponent: store.moveComponent,
@@ -39,10 +42,14 @@ export const BuilderProvider: React.FC<{ children: ReactNode }> = ({ children })
 
 export const useBuilder = () => {
   const store = useBuilderStore();
+  const selectedComponents = store.order
+    .map(id => store.sections[id])
+    .filter((section): section is SelectedComponent => Boolean(section));
+
   return {
     projectName: store.projectName,
     setProjectName: store.setProjectName,
-    selectedComponents: store.order.map(id => store.sections[id]),
+    selectedComponents,
     addComponent: store.addComponent,
     removeComponent: store.removeComponent,
     moveComponent: store.moveComponent,

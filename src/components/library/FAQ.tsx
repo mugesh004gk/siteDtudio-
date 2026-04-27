@@ -16,7 +16,7 @@ export const FAQBasicList = ({ bgColor, accentColor, isPreview }: any) => (
                 <span style={{ background: accentColor }} className="w-1.5 h-1.5 rounded-full" />
                 How does the site export work?
              </h3>
-             <p className="text-white/40 leading-relaxed pl-4.5 border-l border-white/5">You can export your site as a production-ready React package or a single HTML/CSS file. All styles are optimized for performance and SEO.</p>
+             <p className="text-white/40 leading-relaxed pl-5 border-l border-white/5">You can export your site as a production-ready React package or a single HTML/CSS file. All styles are optimized for performance and SEO.</p>
           </div>
         ))}
       </div>
@@ -55,23 +55,27 @@ export const FAQAccordionGlass = ({ bgColor, accentColor, isPreview }: any) => {
   );
 };
 
-export const FAQGridCards = ({ bgColor, cols = 3, isPreview }: any) => (
-  <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6`}>
-    <div className="max-w-7xl mx-auto">
-      <div className={`grid grid-cols-1 md:grid-cols-${cols} gap-6 md:gap-8`}>
-        {[1,2,3,4,5,6].map(i => (
-          <div key={i} className="p-10 rounded-[2.5rem] bg-[#111] border border-white/5 hover:border-indigo-500/30 transition-all group shadow-xl">
-             <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/20 group-hover:bg-indigo-600 group-hover:text-white transition-all mb-8">
-                <HelpCircle size={24} />
-             </div>
-             <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tighter tracking-tight">Is there a free trial?</h3>
-             <p className="text-white/40 leading-relaxed font-medium">Yes! You can use all core features for free on up to 3 projects. No credit card required to start.</p>
-          </div>
-        ))}
+export const FAQGridCards = ({ bgColor, cols = 3, isPreview }: any) => {
+  const colsClass = cols >= 4 ? 'md:grid-cols-4' : cols === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
+
+  return (
+    <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6`}>
+      <div className="max-w-7xl mx-auto">
+        <div className={`grid grid-cols-1 ${colsClass} gap-6 md:gap-8`}>
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="p-10 rounded-[2.5rem] bg-[#111] border border-white/5 hover:border-indigo-500/30 transition-all group shadow-xl">
+               <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-white/20 group-hover:bg-indigo-600 group-hover:text-white transition-all mb-8">
+                  <HelpCircle size={24} />
+               </div>
+               <h3 className="text-xl font-black text-white mb-4 uppercase tracking-tighter tracking-tight">Is there a free trial?</h3>
+               <p className="text-white/40 leading-relaxed font-medium">Yes! You can use all core features for free on up to 3 projects. No credit card required to start.</p>
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 export const FAQTabsFilter = ({ bgColor, activeColor, isPreview }: any) => {
   const [activeTab, setActiveTab] = useState(0);

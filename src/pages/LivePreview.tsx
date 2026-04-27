@@ -1,5 +1,5 @@
 import { useBuilder } from '../context/BuilderContext';
-import { componentMap } from '../lib/componentMap';
+import { resolveComponentByKey } from '../lib/componentMap';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Monitor, Tablet, Smartphone, Globe, Share2, Rocket } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -41,6 +41,24 @@ export default function LivePreview() {
 
   return (
     <div className="min-h-screen bg-[#09090b] text-[#fafafa] font-sans selection:bg-indigo-500/30">
+      <style>{`
+        .preview-section {
+          width: 100%;
+          max-width: 100%;
+          overflow: hidden;
+        }
+        .preview-section > * {
+          width: 100%;
+          max-width: 100%;
+        }
+        .preview-section img,
+        .preview-section video,
+        .preview-section svg,
+        .preview-section canvas {
+          max-width: 100%;
+          height: auto;
+        }
+      `}</style>
       {/* Dynamic Controls Header */}
       <header className="fixed top-0 inset-x-0 z-[100] bg-black/80 backdrop-blur-2xl border-b border-white/5 h-20 flex items-center justify-between px-10 shadow-[0_20px_50px_rgba(0,0,0,0.8)]">
         <div className="flex items-center gap-6">
@@ -80,16 +98,33 @@ export default function LivePreview() {
         <div className={`bg-[#09090b] ${device !== 'desktop' ? 'h-[800px] overflow-hidden rounded-[3rem]' : ''}`}>
            {device === 'desktop' ? (
              selectedComponents.map((item) => {
-               const Component = componentMap[item.componentKey];
-               if (!Component) return <div key={item.id} className="p-20 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-widest border-y border-rose-500/10">Registry Error: {item.componentKey}</div>;
-               return <Component key={item.id} {...item.props} />;
+                 const Component = resolveComponentByKey(item.componentKey);
+                if (!Component) return <div key={item.id} className="p-20 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-widest border-y border-rose-500/10">Registry Error: {item.componentKey}</div>;
+                return (
+                  <div key={item.id} className="preview-section">
+                    <Component {...item.props} />
+                  </div>
+                );
              })
            ) : (
-             <Frame head={<>{frameStyles}</>} style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#09090b', display: 'block' }}>
+             <Frame head={<>
+               {frameStyles}
+               <style>{`
+                html, body { margin: 0; padding: 0; overflow-x: hidden; }
+                * { box-sizing: border-box; }
+                .preview-section { width: 100%; max-width: 100%; overflow: hidden; }
+                .preview-section > * { width: 100%; max-width: 100%; }
+                .preview-section img, .preview-section video, .preview-section svg, .preview-section canvas { max-width: 100%; height: auto; }
+               `}</style>
+             </>} style={{ width: '100%', height: '100%', border: 'none', backgroundColor: '#09090b', display: 'block' }}>
                {selectedComponents.map((item) => {
-                 const Component = componentMap[item.componentKey];
+                 const Component = resolveComponentByKey(item.componentKey);
                  if (!Component) return <div key={item.id} className="p-20 text-center bg-rose-500/5 text-rose-500 text-[10px] font-black uppercase tracking-widest border-y border-rose-500/10">Registry Error: {item.componentKey}</div>;
-                 return <Component key={item.id} {...item.props} />;
+                 return (
+                   <div key={item.id} className="preview-section">
+                     <Component {...item.props} />
+                   </div>
+                 );
                })}
              </Frame>
            )}

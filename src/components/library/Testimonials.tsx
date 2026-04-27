@@ -35,6 +35,7 @@ export const TestimonialSingle = ({ bgColor, textColor, accentColor, authorName,
 );
 
 export const TestimonialGridBasic = ({ bgColor, textColor, cols = 3, isPreview }: any) => {
+  const colsClass = cols >= 4 ? 'md:grid-cols-4' : cols === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
   const items = [
     { name: "Sarah J.", role: "CEO @ TechFlow", text: "SiteStudio optimized our entire stack in weeks. Truly innovative." },
     { name: "Mike D.", role: "Founding Engineer", text: "The cleanest UI builder I have ever used. The code output is production-grade." },
@@ -44,7 +45,7 @@ export const TestimonialGridBasic = ({ bgColor, textColor, cols = 3, isPreview }
   return (
     <section style={{ background: bgColor, color: textColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6 overflow-hidden`}>
       <div className="max-w-7xl mx-auto">
-        <div className={`grid grid-cols-1 md:grid-cols-${cols} gap-8`}>
+        <div className={`grid grid-cols-1 ${colsClass} gap-8`}>
           {items.map((item, i) => (
             <motion.div key={i} whileHover={{ y: -5 }} className="p-8 rounded-[2.5rem] bg-white/5 border border-white/5 relative group">
               <Quote size={24} className="text-indigo-500 mb-6 opacity-40 group-hover:opacity-100 transition-opacity" />

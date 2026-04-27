@@ -17,7 +17,8 @@ const AnimatedNumber = ({ value, prefix = "", suffix = "" }: { value: number, pr
     }, [isInView, value, motionValue]);
 
     useEffect(() => {
-        springValue.on("change", (latest) => setDisplayValue(Math.floor(latest)));
+        const unsubscribe = springValue.on("change", (latest) => setDisplayValue(Math.floor(latest)));
+        return () => unsubscribe();
     }, [springValue]);
 
     return (
@@ -256,25 +257,30 @@ export const StatsInteractive = ({ bgColor, accentColor, isPreview }: any) => (
           { label: "SATISFACTION", val: 99, icon: <Sparkles /> },
           { label: "DEPLOYMENT", val: 124, icon: <Rocket /> },
           { label: "AWARDS WON", val: 42, icon: <Award /> }
-       ].map((item, i) => {
-          const [key, setKey] = useState(0);
-          return (
-             <div key={i} onMouseEnter={() => setKey(prev => prev + 1)} className="text-center group cursor-pointer">
-                <div style={{ color: accentColor }} className="text-8xl font-black text-white italic tracking-tighter mb-6 flex justify-center items-center gap-4">
-                   <motion.div key={key} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-                        <AnimatedNumber value={item.val} suffix="+" />
-                   </motion.div>
-                </div>
-                <div className="flex items-center justify-center gap-3">
-                   <div style={{ background: accentColor }} className="w-2 h-2 rounded-full animate-pulse" />
-                   <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em] group-hover:text-white transition-colors">{item.label}</div>
-                </div>
-             </div>
-          );
-       })}
+       ].map((item, i) => (
+          <StatsInteractiveCard key={i} item={item} accentColor={accentColor} />
+       ))}
     </div>
   </section>
 );
+
+const StatsInteractiveCard = ({ item, accentColor }: { item: { label: string; val: number }; accentColor: string }) => {
+  const [animationKey, setAnimationKey] = useState(0);
+
+  return (
+    <div onMouseEnter={() => setAnimationKey(prev => prev + 1)} className="text-center group cursor-pointer">
+      <div style={{ color: accentColor }} className="text-8xl font-black text-white italic tracking-tighter mb-6 flex justify-center items-center gap-4">
+        <motion.div key={animationKey} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+          <AnimatedNumber value={item.val} suffix="+" />
+        </motion.div>
+      </div>
+      <div className="flex items-center justify-center gap-3">
+        <div style={{ background: accentColor }} className="w-2 h-2 rounded-full animate-pulse" />
+        <div className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em] group-hover:text-white transition-colors">{item.label}</div>
+      </div>
+    </div>
+  );
+};
 
 export const StatsMinimal = ({ bgColor, isPreview }: any) => (
   <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6`}>

@@ -126,31 +126,35 @@ export const ContactWithMap = ({ bgColor, accentColor, isPreview }: any) => (
   </section>
 );
 
-export const ContactCards = ({ bgColor, cols = 3, isPreview }: any) => (
-  <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6`}>
-    <div className="max-w-7xl mx-auto">
-       <div className={`grid grid-cols-1 md:grid-cols-${cols} gap-6 md:gap-8`}>
-          {[
-             { title: "Technical Support", icon: <Sparkles />, color: "#8b5cf6" },
-             { title: "Sales Inquiries", icon: <Briefcase />, color: "#6366f1" },
-             { title: "Press & Media", icon: <Globe />, color: "#f43f5e" }
-          ].map((card, i) => (
-             <div key={i} className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all group relative overflow-hidden shadow-2xl">
-                <div style={{ background: card.color }} className="absolute -top-10 -right-10 w-32 h-32 opacity-5 rounded-full blur-3xl group-hover:opacity-20 transition-opacity" />
-                <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-white mb-8 group-hover:scale-110 transition-transform">
-                   {React.cloneElement(card.icon as any, { size: 24 })}
-                </div>
-                <h3 className="text-2xl font-black text-white tracking-tighter mb-4 uppercase">{card.title}</h3>
-                <p className="text-white/40 mb-10 text-sm font-medium leading-relaxed italic">"Our priority is to provide high-fidelity solutions for every scale of operation."</p>
-                <button className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-3 group-hover:translate-x-4 transition-transform">
-                   Contact Department <ArrowRight size={14}/>
-                </button>
-             </div>
-          ))}
-       </div>
-    </div>
-  </section>
-);
+export const ContactCards = ({ bgColor, cols = 3, isPreview }: any) => {
+  const colsClass = cols >= 4 ? 'md:grid-cols-4' : cols === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
+
+  return (
+    <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6`}>
+      <div className="max-w-7xl mx-auto">
+         <div className={`grid grid-cols-1 ${colsClass} gap-6 md:gap-8`}>
+            {[
+               { title: "Technical Support", icon: <Sparkles />, color: "#8b5cf6" },
+               { title: "Sales Inquiries", icon: <Briefcase />, color: "#6366f1" },
+               { title: "Press & Media", icon: <Globe />, color: "#f43f5e" }
+            ].map((card, i) => (
+               <div key={i} className="p-10 rounded-[3rem] bg-white/[0.02] border border-white/5 hover:border-white/10 transition-all group relative overflow-hidden shadow-2xl">
+                  <div style={{ background: card.color }} className="absolute -top-10 -right-10 w-32 h-32 opacity-5 rounded-full blur-3xl group-hover:opacity-20 transition-opacity" />
+                  <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-white mb-8 group-hover:scale-110 transition-transform">
+                     {React.cloneElement(card.icon as any, { size: 24 })}
+                  </div>
+                  <h3 className="text-2xl font-black text-white tracking-tighter mb-4 uppercase">{card.title}</h3>
+                  <p className="text-white/40 mb-10 text-sm font-medium leading-relaxed italic">"Our priority is to provide high-fidelity solutions for every scale of operation."</p>
+                  <button className="text-[10px] font-black text-white uppercase tracking-widest flex items-center gap-3 group-hover:translate-x-4 transition-transform">
+                     Contact Department <ArrowRight size={14}/>
+                  </button>
+               </div>
+            ))}
+         </div>
+      </div>
+    </section>
+  );
+};
 
 export const ContactSocial = ({ bgColor, isPreview }: any) => (
   <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6`}>

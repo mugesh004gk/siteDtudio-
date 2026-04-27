@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { mockComponents } from '../lib/mockData';
+import { ChevronRight, Zap, Sparkles } from 'lucide-react';
 
 const categories = [
   { slug: 'navbar', name: 'Navbar', icon: '🧭' },
@@ -28,7 +29,6 @@ export default function ComponentsList() {
 
   useEffect(() => {
     const fetchCounts = async () => {
-      // Use mock by default for speed, can override with Firebase if needed
       const components = mockComponents;
       const counts: Record<string, number> = {};
       categories.forEach(cat => {
@@ -57,32 +57,58 @@ export default function ComponentsList() {
   }, []);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-12">
-      <div className="mb-12">
-        <h1 className="text-4xl font-bold text-white mb-3 tracking-tight">Component Library</h1>
-        <p className="text-lg text-white/50 max-w-2xl leading-relaxed">Browse our extensive collection of premium, production-ready components organized by category.</p>
-      </div>
+    <div className="bg-[#020617] min-h-screen">
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        <div className="mb-12">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-[10px] font-black uppercase tracking-[0.2em] mb-6 shadow-[0_0_15px_rgba(139,92,246,0.1)]">
+            <Sparkles size={14} />
+            <span>Futuristic Registry</span>
+          </div>
+          <h1 className="text-4xl md:text-6xl font-black text-white mb-4 tracking-tighter uppercase leading-none">Modules</h1>
+          <p className="text-lg text-slate-400 max-w-2xl leading-relaxed font-medium">
+            Browse our hyper-optimized library of futuristic web modules. Built for precision and high-fidelity rendering.
+          </p>
+        </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((category, idx) => {
-          return (
-            <motion.div key={category.slug} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-              <Link to={`/components/${category.slug}`}
-                className="block bg-[#18181b] rounded-[2rem] border border-white/5 hover:border-indigo-500/30 transition-all group overflow-hidden shadow-xl shadow-black/20">
-                <div className="p-8">
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center text-2xl group-hover:scale-110 transition-transform">
-                      {category.icon}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {categories.map((category, idx) => {
+            return (
+              <motion.div 
+                key={category.slug} 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ delay: idx * 0.05 }}
+              >
+                <Link to={`/components/${category.slug}`}
+                  className="group block h-[300px] bg-[#111827] p-6 rounded-[2rem] border border-white/5 hover:border-purple-500/50 transition-all hover:scale-105 shadow-2xl relative overflow-hidden"
+                >
+                  <div className="flex flex-col h-full relative z-10">
+                    <div className="flex items-center justify-between mb-6">
+                      <div className="w-14 h-14 bg-[#020617] rounded-2xl border border-white/5 flex items-center justify-center text-3xl group-hover:scale-110 group-hover:bg-purple-600/10 group-hover:text-purple-400 transition-all shadow-inner">
+                        {category.icon}
+                      </div>
+                      <div className="text-[10px] font-black text-purple-400 bg-purple-500/10 px-2.5 py-1 rounded-md uppercase tracking-widest border border-purple-500/20">
+                        {componentCounts[category.slug] || 0} Blocks
+                      </div>
                     </div>
-                    <h3 className="text-xl font-bold text-white group-hover:text-indigo-400 transition-colors uppercase tracking-tight">{category.name}</h3>
+                    <h3 className="text-2xl font-black text-white group-hover:text-purple-400 transition-colors mb-3 tracking-tight uppercase">
+                      {category.name}
+                    </h3>
+                    <p className="text-sm text-slate-500 leading-relaxed mb-auto font-medium">
+                      High-fidelity {category.name.toLowerCase()} modules optimized for futuristic site architectures.
+                    </p>
+                    <div className="flex items-center text-[10px] font-black uppercase tracking-widest text-white mt-6 group-hover:text-purple-400 transition-colors">
+                      Enter Directory <ChevronRight size={14} className="ml-2 group-hover:ml-3 transition-all" />
+                    </div>
                   </div>
-                  <p className="text-sm text-white/40 leading-relaxed">Explore professional {category.name.toLowerCase()} designs for your next project.</p>
-                </div>
-                <div className="h-1.5 bg-gradient-to-r from-indigo-500/0 via-indigo-500/60 to-indigo-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
-              </Link>
-            </motion.div>
-          );
-        })}
+                  {/* Decorative Glow */}
+                  <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/5 blur-3xl rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <div className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-purple-500 to-blue-500 w-0 group-hover:w-full transition-all duration-500" />
+                </Link>
+              </motion.div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

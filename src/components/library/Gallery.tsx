@@ -5,22 +5,26 @@ import { Maximize2, Play, X, ChevronLeft, ChevronRight, Search, Filter, Camera, 
 
 // ─── GALLERY COMPONENTS ───
 
-export const GalleryBasicGrid = ({ bgColor, cols = 3, isPreview }: any) => (
-  <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6`}>
-    <div className="max-w-7xl mx-auto">
-      <div className={`grid grid-cols-1 md:grid-cols-${cols} gap-6 md:gap-8`}>
-        {[1,2,3,4,5,6].map(i => (
-          <div key={i} className="aspect-square bg-[#111] border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer relative shadow-2xl">
-            <img src={`https://images.unsplash.com/photo-1518005020453-6ec241dcb140?q=80&w=600`} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" alt="gallery" />
-            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-               <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><Maximize2 size={20}/></div>
+export const GalleryBasicGrid = ({ bgColor, cols = 3, isPreview }: any) => {
+  const colsClass = cols >= 4 ? 'md:grid-cols-4' : cols === 2 ? 'md:grid-cols-2' : 'md:grid-cols-3';
+
+  return (
+    <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6`}>
+      <div className="max-w-7xl mx-auto">
+        <div className={`grid grid-cols-1 ${colsClass} gap-6 md:gap-8`}>
+          {[1,2,3,4,5,6].map(i => (
+            <div key={i} className="aspect-square bg-[#111] border border-white/5 rounded-[2.5rem] overflow-hidden group cursor-pointer relative shadow-2xl">
+              <img src={`https://images.unsplash.com/photo-1518005020453-6ec241dcb140?q=80&w=600`} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700" alt="gallery" />
+              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                 <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white"><Maximize2 size={20}/></div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
-    </div>
-  </section>
-);
+    </section>
+  );
+};
 
 export const GalleryGrid4Col = ({ bgColor, isPreview }: any) => (
   <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'py-10' : 'py-24'} px-6`}>
@@ -216,7 +220,7 @@ export const GalleryInteractive = ({ bgColor, accentColor, isPreview }: any) => 
 
 export const GalleryFullscreen = ({ bgColor, isPreview }: any) => (
    <section style={{ background: bgColor }} className={`w-full ${isPreview ? 'h-[500px]' : 'h-screen'} overflow-hidden relative group`}>
-      <img src="https://images.unsplash.com/photo-1518005020453-6ec241dcb140?q=80&w=1500" className="absolute inset-0 w-full h-full object-cover opacity-40 timescale-150 group-hover:scale-110 transition-transform duration-[10s]" alt="full" />
+      <img src="https://images.unsplash.com/photo-1518005020453-6ec241dcb140?q=80&w=1500" className="absolute inset-0 w-full h-full object-cover opacity-40 group-hover:scale-110 transition-transform duration-[10s]" alt="full" />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
          <motion.div initial={{ y: 50, opacity: 0 }} whileInView={{ y: 0, opacity: 1 }} className="flex items-center gap-4 mb-10 opacity-40">
             <div className="w-12 h-px bg-white" />

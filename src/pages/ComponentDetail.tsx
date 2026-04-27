@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useState, useEffect } from 'react';
 import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { componentMap } from '../lib/componentMap';
+import { resolveComponentByKey } from '../lib/componentMap';
 import { useBuilder } from '../context/BuilderContext';
 import { 
   ArrowLeft, Plus, Eye, Code, Share2, Heart, 
@@ -72,7 +72,7 @@ export default function ComponentDetail() {
     </div>
   );
 
-  const RenderComp = componentMap[component.componentKey] || (() => <div className="p-20 text-center text-white/10 font-black uppercase tracking-widest text-xs">Visual Component Not Registered</div>);
+  const RenderComp = resolveComponentByKey(component.componentKey) || (() => <div className="p-20 text-center text-white/10 font-black uppercase tracking-widest text-xs">Visual Component Not Registered</div>);
 
   const handleAdd = () => {
     addComponent(component.componentKey);

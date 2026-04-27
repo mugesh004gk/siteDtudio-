@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Search, ArrowRight, Plus, Check, X } from 'lucide-react';
 import { componentsRegistry } from '../registry/componentsRegistry';
-import { getComponent } from '../lib/registryMap';
+import { resolveComponentByKey } from '../lib/componentMap';
 import { useBuilder } from '../context/BuilderContext';
 import { useNavigate } from 'react-router-dom';
 import { previewMap } from '../lib/previewMap';
@@ -64,7 +64,7 @@ export default function AI() {
   };
 
   const handleAdd = (comp: typeof componentsRegistry[0]) => {
-    addComponent(comp.slug, comp.defaultSettings);
+    addComponent(comp.componentKey, comp.defaultSettings);
     setAddedSlug(comp.slug);
     setTimeout(() => setAddedSlug(null), 2000);
   };
@@ -169,7 +169,9 @@ export default function AI() {
         {previewSlug && (() => {
           const comp = results.find(r => r.slug === previewSlug);
           if (!comp) return null;
-          const ComponentToRender = getComponent(comp.componentKey);
+          const ComponentToRender =
+            resolveComponentByKey(comp.componentKey) ||
+            (() => <div className="p-20 text-center text-white/10 font-black uppercase tracking-widest text-xs">Visual Component Not Registered</div>);
           return (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-8" onClick={() => setPreviewSlug(null)}>
               <motion.div initial={{ scale: 0.95, y: 40 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 40 }} onClick={e => e.stopPropagation()} className="bg-[#09090b] rounded-[4rem] border border-white/10 w-full max-w-6xl overflow-hidden shadow-[0_100px_150px_-50px_rgba(0,0,0,1)] relative">

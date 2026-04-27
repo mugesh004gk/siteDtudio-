@@ -5,7 +5,16 @@ import {
 } from 'lucide-react';
 
 /* --- BASIC HEROS --- */
-export const HeroTextRight = ({ bgColor = '#09090b', textColor = '#ffffff', align = 'left', padding = '4rem 2rem', title = 'Build the Future', subtitle = 'The most advanced platform for modern web development.', buttonText = 'Get Started' }: any) => (
+export const HeroTextRight = ({
+  bgColor = '#09090b',
+  textColor = '#ffffff',
+  align = 'left',
+  padding = '4rem 2rem',
+  title = 'Build the Future',
+  subtitle = 'The most advanced platform for modern web development.',
+  buttonText = 'Get Started',
+  image = 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80',
+}: any) => (
   <div style={{ backgroundColor: bgColor, color: textColor, padding, textAlign: align }} className="w-full min-h-[500px] flex items-center transition-all bg-cover bg-center">
     <div className="max-w-7xl mx-auto w-full grid md:grid-cols-2 gap-12 items-center">
        <div>
@@ -17,7 +26,7 @@ export const HeroTextRight = ({ bgColor = '#09090b', textColor = '#ffffff', alig
          </div>
        </div>
        <div className="rounded-3xl overflow-hidden shadow-2xl h-96 relative bg-white/5 border border-white/10 group">
-         <img src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=800&q=80" alt="Hero" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+         <img src={image} alt="Hero" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
        </div>
     </div>
   </div>

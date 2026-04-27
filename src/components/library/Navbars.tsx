@@ -174,7 +174,7 @@ export const NavbarPortfolioDark = ({ bgColor, font, padding }: any) => (
 );
 export const NavbarPortfolioVertical = ({ bgColor, font }: any) => (
   <div style={{ background: bgColor, fontFamily: font }} className="w-32 h-40 border-r border-white/10 flex flex-col items-center justify-between py-6">
-    <div className="font-bold text-xl writing-vertical-rl rotate-180">PORTFOLIO</div>
+    <div style={{ writingMode: 'vertical-rl' }} className="font-bold text-xl rotate-180">PORTFOLIO</div>
     <div className="w-1 h-8 bg-indigo-500 rounded-full" />
   </div>
 );

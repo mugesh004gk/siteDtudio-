@@ -19,17 +19,35 @@ export const PreviewContainer: React.FC<PreviewContainerProps> = ({
   className = ""
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [scale, setScale] = useState(1);
+
+  useEffect(() => {
+    const updateScale = () => {
+      if (containerRef.current) {
+        const parentWidth = containerRef.current.offsetWidth;
+        const newScale = parentWidth / width;
+        setScale(newScale);
+      }
+    };
+
+    updateScale();
+    window.addEventListener('resize', updateScale);
+    return () => window.removeEventListener('resize', updateScale);
+  }, [width]);
 
   return (
     <div className={`relative flex flex-col group ${className}`}>
-        <div ref={containerRef} style={{ height: `${height}px` }} 
-            className={`w-full overflow-y-auto overflow-x-hidden custom-scrollbar bg-[#09090b] relative rounded-t-[2.5rem] border-b border-white/5`}>
+        <div ref={containerRef} style={{ height: `${height * scale}px` }} 
+            className={`w-full overflow-hidden custom-scrollbar bg-[#09090b] relative rounded-t-[2.5rem] border-b border-white/5`}>
             
             <div 
                 style={{
                   width: `${width}px`,
-                  transformOrigin: "top center",
-                  margin: "0 auto"
+                  transform: `scale(${scale})`,
+                  transformOrigin: "top left",
+                  position: "absolute",
+                  top: 0,
+                  left: 0
                 }}
             >
                 {children}
